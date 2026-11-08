@@ -1,0 +1,15 @@
+# Keep generated analysis outputs and local R state out of commits.
+results/*
+!results/README.md
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/staging/
+
+# The input folder is tracked, but review public-data implications before adding files.
+# Large BEAST outputs should stay outside Git.
+*.trees
+*.trees.txt
+*.log
+*.log.txt
