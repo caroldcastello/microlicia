@@ -1,0 +1,22 @@
+# Paths are relative to the repository root.
+files:
+  mcc_tree: data/input/teste_datacao_MCC.tree
+  occurrences: data/input/ocorrencias.csv
+  stamen_traits: data/input/estames.csv
+
+# Replace with exact column names in the CSV files.
+columns:
+  taxon: species
+  longitude: longitude
+  latitude: latitude
+
+# Add exact trait column names after reviewing estames.csv.
+traits:
+  quantitative: []
+  categorical: []
+
+# Set only after confirming the source metadata.
+occurrence_crs: null
+
+# Geographic areas are defined only after choosing a question and coding scheme.
+areas: []
