@@ -1,4 +1,4 @@
-name: Microlicia pilot 1.3
+name: Microlicia pilot 1.4
 
 on:
   workflow_dispatch:
@@ -40,13 +40,13 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Generate the dated MCC figure with all taxa
         run: python scripts/pilot_1_0.py --tree-figure-only
-      - name: Run Microlicia Pilot 1.3
+      - name: Run Microlicia Pilot 1.4
         run: python scripts/pilot_1_0.py
       - name: Upload report, metadata, tables, and figures
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: microlicia-pilot-1.3-results
+          name: microlicia-pilot-1.4-results
           path: results/
           if-no-files-found: error
           retention-days: 90
