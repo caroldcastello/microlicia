@@ -38,12 +38,18 @@ XML_PATH=INPUT_DIR/'teste_datacao(1).xml'
 DATING_REF=Path(os.environ.get('PILOT_DATING_REFERENCE','data/metadata/fonte_datação.json'))
 FILTER_AUDIT=Path(os.environ.get('PILOT_FILTER_AUDIT','data/metadata/taxa_ocorrencias_excluidos_sem_correspondencia.csv'))
 
-# The MCC retains the submitted tip labels, while the occurrence table has
-# corrected these two Microlicia names. Apply the label corrections in memory;
-# the original dating tree is kept unchanged for traceability.
-TREE_TIP_NAME_CORRECTIONS={
-    'm_bellineloi':'m_belinelloi',
-    'm_diamantinensis':'m_diamantinesis',
+# MCC tip labels define the analysis reference. Candidate occurrence spellings
+# are mapped to exact tree labels for matching only. This is not a claim of
+# taxonomic synonymy; all original labels remain in the crosswalk and inputs.
+OCCURRENCE_TO_TREE_TIP_ALIASES={
+    'm_amblyssepala':'m_amblysepala',
+    'm_amplexiaculis':'m_amplexicaulis',
+    'm_aracnoidea':'m_arachnoidea',
+    'm_bacchaoides':'m_baccharoides',
+    'm_belinelloi':'m_bellineloi',
+    'm_diamantinesis':'m_diamantinensis',
+    'm_helvoa':'m_helvola',
+    'm_hilairei':'m_hilarei',
 }
 GENUS_PREFIXES={
     'm':'Microlicia',
@@ -115,11 +121,6 @@ def parse_tree(path:Path)->Node:
         if not n.children and n.name in translate:n.name=translate[n.name]
         for child in n.children:resolve_translate(child)
     resolve_translate(root)
-    def correct_tree_tip_names(n):
-        if not n.children and n.name in TREE_TIP_NAME_CORRECTIONS:
-            n.name=TREE_TIP_NAME_CORRECTIONS[n.name]
-        for child in n.children:correct_tree_tip_names(child)
-    correct_tree_tip_names(root)
     nodes=[]; tips=[]
     def index(n,depth):
         n.ident=len(nodes); n.depth=depth; nodes.append(n)
@@ -137,21 +138,31 @@ def descendants(n):
     return sum((descendants(c) for c in n.children),[])
 
 def read_occurrences(path):
-    # Exported CSV is semicolon-delimited and Windows-1252 encoded.
-    d=pd.read_csv(path,sep=';',encoding='utf-8-sig',dtype={'Taxon_original':'string'},keep_default_na=False)
+    # Exports may be UTF-8 or Windows-1252; try UTF-8 first and fall back only
+    # when the byte stream is not valid UTF-8.
+    try:
+        d=pd.read_csv(path,sep=';',encoding='utf-8-sig',dtype={'Taxon_original':'string'},keep_default_na=False)
+    except UnicodeDecodeError:
+        d=pd.read_csv(path,sep=';',encoding='cp1252',dtype={'Taxon_original':'string'},keep_default_na=False)
     needed={'Taxon_original','Latitude_decimal','Longitude_decimal'}
     if not needed.issubset(d.columns):raise ValueError(f'Occurrence columns missing: {needed-set(d.columns)}')
     d['taxon_raw']=d['Taxon_original'].astype(str).str.strip()
-    # Explicit, reversible formatting harmonization only; no spelling/synonym changes.
+    d['taxon_normalized']=d['taxon_raw'].map(normalize_taxon_label)
     if 'taxon_tree' in d.columns:
-        d['taxon_match']=d['taxon_tree'].astype(str).str.strip()
-        d['taxon_match']=d['taxon_match'].str.replace(r'_\s+','_',regex=True)
-    else:
-        d['taxon_match']=d['taxon_raw'].str.replace(r'_\s+','_',regex=True)
+        d['taxon_normalized']=d['taxon_tree'].astype(str).map(normalize_taxon_label)
     d['latitude']=pd.to_numeric(d['Latitude_decimal'],errors='coerce')
     d['longitude']=pd.to_numeric(d['Longitude_decimal'],errors='coerce')
     d['coord_valid']=d.latitude.between(-90,90)&d.longitude.between(-180,180)
     return d
+
+def normalize_taxon_label(value):
+    """Normalize formatting and a full Microlicia genus name to MCC-style labels."""
+    x=str(value).strip().lower()
+    x=re.sub(r'^microlicia[ _]+','m_',x)
+    x=re.sub(r'^m[ _]+','m_',x)
+    x=re.sub(r'\s+','_',x)
+    x=re.sub(r'_+','_',x)
+    return x
 
 def read_traits(path):
     d=pd.read_csv(path,sep=';',encoding='utf-8-sig',dtype=str,keep_default_na=False)
@@ -368,11 +379,20 @@ micro_tips=[n for n in micro_nodes if not n.children]
 micro_tipset={n.name for n in micro_tips}
 plot_dated_tree(root_full,OUT/'dated_tree_all_taxa.png',OUT/'dated_tree_all_taxa.pdf')
 occ_input=read_occurrences(OCC_PATH)
-occ_input['taxon_match']=occ_input.taxon_match.replace(TREE_TIP_NAME_CORRECTIONS)
+occ_input['taxon_match_exact']=occ_input.taxon_normalized
+occ_input['taxon_match']=occ_input.taxon_normalized.replace(OCCURRENCE_TO_TREE_TIP_ALIASES)
+occ_input['name_rule']=np.where(
+    occ_input.taxon_normalized.isin(OCCURRENCE_TO_TREE_TIP_ALIASES),
+    'candidate spelling mapped to MCC tip; taxonomic validation pending',
+    np.where(occ_input.taxon_normalized.isin(tipset),'exact match after formatting normalization','no MCC match; excluded from tree-based analyses')
+)
 occ_input['taxon_matched_full_tree']=occ_input.taxon_match.isin(tipset)
 occ_input['taxon_matched_microlicia']=occ_input.taxon_match.isin(microlicia_tipset)
 traits_all,trait_meta=read_traits(TRAIT_PATH)
-traits_all['taxon']=traits_all.taxon.replace(TREE_TIP_NAME_CORRECTIONS)
+traits_all['taxon_raw']=traits_all.taxon
+traits_all['taxon']=traits_all.taxon.map(normalize_taxon_label)
+traits_all['matched_mcc_tip']=traits_all.taxon.isin(tipset)
+traits_all['included_microlicia']=traits_all.taxon.isin(microlicia_tipset)
 if traits_all.taxon.duplicated().any():raise ValueError('Duplicate trait taxon rows; resolve before analysis')
 traits=traits_all[traits_all.taxon.isin(microlicia_tipset)].copy()
 if not traits.taxon.isin(microlicia_tipset).all():raise ValueError('Trait filtering to Microlicia failed')
@@ -381,10 +401,14 @@ if not len(occ):raise ValueError('No occurrence records matched Microlicia tips 
 trait_taxa=set(traits.taxon)
 
 # Species crosswalk and unmatched occurrence taxa.
-occ_taxa_all=occ_input.groupby(['taxon_raw','taxon_match'],dropna=False).agg(n_records=('taxon_raw','size'),n_valid_coordinates=('coord_valid','sum')).reset_index()
+occ_taxa_all=occ_input.groupby(['taxon_raw','taxon_normalized','taxon_match','name_rule'],dropna=False).agg(n_records=('taxon_raw','size'),n_valid_coordinates=('coord_valid','sum')).reset_index()
 occ_taxa_all['matched_full_tree']=occ_taxa_all.taxon_match.isin(tipset)
 occ_taxa_all['included_in_microlicia_analyses']=occ_taxa_all.taxon_match.isin(microlicia_tipset)
 write_csv(occ_taxa_all,OUT/'occurrence_taxon_crosswalk.csv')
+write_csv(occ_taxa_all,OUT/'name_reconciliation_occurrences.csv')
+trait_name_audit=traits_all[['taxon_raw','taxon','matched_mcc_tip','included_microlicia']].copy()
+trait_name_audit['name_rule']=np.where(trait_name_audit.matched_mcc_tip,'exact match after formatting normalization','no MCC match; excluded from tree-based analyses')
+write_csv(trait_name_audit,OUT/'name_reconciliation_stamen_traits.csv')
 unmatched=occ_taxa_all[~occ_taxa_all.matched_full_tree].copy().sort_values(['n_records','taxon_raw'],ascending=[False,True])
 write_csv(unmatched,OUT/'occurrence_taxa_unmatched.csv')
 outgroup_occurrence_taxa=occ_taxa_all[occ_taxa_all.matched_full_tree & ~occ_taxa_all.included_in_microlicia_analyses].copy()
@@ -503,13 +527,13 @@ for col,meta in trait_meta.items():
     recon=recon_results[col]; states=recon['states']
     recon_summary.append({'trait':meta['name'],'states':states,'q_per_tree_unit':recon['q_per_tree_unit'],'log_likelihood':recon['log_likelihood'],'root_probabilities':{trait_labels[col].get(s,str(s)):float(recon['root_probs'][i]) for i,s in enumerate(states)}})
 metadata={
-    'pilot_version':'1.1',
+    'pilot_version':'1.2',
     'run_time_utc':datetime.now(timezone.utc).isoformat(),
     'software':{'python':sys.version.split()[0],'platform':platform.platform(),'numpy':np.__version__,'pandas':pd.__version__,'scipy':__import__('scipy').__version__,'matplotlib':matplotlib.__version__},
     'inputs':{p.name:{'sha256':sha256(p),'bytes':p.stat().st_size} for p in (TREE_PATH,OCC_PATH,TRAIT_PATH,*( [XML_PATH] if XML_PATH.exists() else [DATING_REF] ),*( [FILTER_AUDIT] if FILTER_AUDIT.exists() else [] ))},
     'analysis_scope':'Microlicia only; all non-Microlicia tips are excluded from comparative analyses after dating',
-    'tree':{'n_tips_all_taxa':len(tips),'n_unique_tips_all_taxa':len(tipset),'n_microlicia_tips':len(microlicia_tipset),'n_non_microlicia_tips':len(tipset)-len(microlicia_tipset),'root_age_tree_units':root_age,'microlicia_crown_age_tree_units':root.age,'root_to_tip_range':root_range,'xml_declared_model_units':dating_units,'calibration_priors':calibrations,'absolute_scale_interpretation':'Ma intended by matching calibration values to Reginato et al. 2022 Table 3 (Ma); XML label says years and must be reconciled before final inference','tip_name_corrections_applied_in_memory':TREE_TIP_NAME_CORRECTIONS},
-    'occurrence':{'n_records_input':len(occ_input),'n_records_microlicia_analyses':len(occ),'n_records_non_microlicia_tree_tips_excluded':int((occ_input.taxon_matched_full_tree & ~occ_input.taxon_matched_microlicia).sum()),'n_records_unmatched_to_full_tree':int((~occ_input.taxon_matched_full_tree).sum()),'n_coordinate_pairs_valid_in_microlicia':coord_complete,'n_coordinate_pairs_needing_review_in_microlicia':coord_bad,'n_unique_taxa_in_input':int(occ_input.taxon_raw.nunique()),'n_microlicia_taxa_matched':matched_unique,'n_unmatched_taxa_to_full_tree':unmatched_unique,'n_microlicia_tips_without_occurrences':len(tree_taxa_without_occ),'n_matched_records':matched_record_count,'n_matched_records_with_valid_coordinates':matched_valid_record_count,'duplicate_coordinate_pairs_global_within_microlicia':int(coord_complete-valid[['latitude','longitude']].drop_duplicates().shape[0])},
+    'tree':{'n_tips_all_taxa':len(tips),'n_unique_tips_all_taxa':len(tipset),'n_microlicia_tips':len(microlicia_tipset),'n_non_microlicia_tips':len(tipset)-len(microlicia_tipset),'root_age_tree_units':root_age,'microlicia_crown_age_tree_units':root.age,'root_to_tip_range':root_range,'xml_declared_model_units':dating_units,'calibration_priors':calibrations,'absolute_scale_interpretation':'Ma intended by matching calibration values to Reginato et al. 2022 Table 3 (Ma); XML label says years and must be reconciled before final inference','tree_tip_labels_used_as_analysis_reference':True,'tree_tip_labels_modified':False},
+    'occurrence':{'n_records_input':len(occ_input),'n_records_microlicia_analyses':len(occ),'n_records_non_microlicia_tree_tips_excluded':int((occ_input.taxon_matched_full_tree & ~occ_input.taxon_matched_microlicia).sum()),'n_records_unmatched_to_full_tree':int((~occ_input.taxon_matched_full_tree).sum()),'n_coordinate_pairs_valid_in_microlicia':coord_complete,'n_coordinate_pairs_needing_review_in_microlicia':coord_bad,'n_unique_taxa_in_input':int(occ_input.taxon_raw.nunique()),'n_microlicia_taxa_matched':matched_unique,'n_unmatched_taxa_to_full_tree':unmatched_unique,'n_microlicia_tips_without_occurrences':len(tree_taxa_without_occ),'n_matched_records':matched_record_count,'n_matched_records_with_valid_coordinates':matched_valid_record_count,'duplicate_coordinate_pairs_global_within_microlicia':int(coord_complete-valid[['latitude','longitude']].drop_duplicates().shape[0]),'occurrence_to_tree_candidate_aliases':OCCURRENCE_TO_TREE_TIP_ALIASES,'alias_mapping_is_taxonomic_synonymy_claim':False,'name_audit_output':'name_reconciliation_occurrences.csv'},
     'stamen':{'n_rows_input_with_taxon':len(traits_all),'n_microlicia_rows':len(traits),'n_microlicia_taxa':int(traits.taxon.nunique()),'n_exact_matches_to_microlicia_tree':int(traits.taxon.isin(micro_tipset).sum()),'all_three_traits_nonmissing_for_microlicia_rows':bool(traits[list(trait_meta)].notna().all(axis=None))},
     'ancestral_reconstruction_model':'Equal-rates CTMC (ER), maximum likelihood; MCC tree only; uniform root prior',
     'ancestral_reconstruction':recon_summary,
@@ -519,9 +543,9 @@ metadata={
 (OUT/'run_metadata.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
 
 lines=[
-'# Microlicia — Piloto de análises 1.1','',
+'# Microlicia — Piloto de análises 1.2','',
 '## Dados e execução','',
-'As análises de ocorrências, estames e reconstrução ancestral incluem somente espécies de *Microlicia*. Uma figura separada apresenta a MCC completa, com os 153 táxons rotulados. Os rótulos de `m_bellineloi` e `m_diamantinensis` são corrigidos em memória para `m_belinelloi` e `m_diamantinesis`; o arquivo original da MCC não é sobrescrito.','',
+'As análises de ocorrências, estames e reconstrução ancestral incluem somente espécies de *Microlicia*. Uma figura separada apresenta a MCC completa, com os 153 táxons rotulados. Os nomes da árvore MCC definem a referência. Os rótulos originais de ocorrência e estames são preservados em tabelas de auditoria; os oito mapeamentos de grafia candidatos às pontas da MCC são usados apenas para cruzamento, sem afirmar sinonímia taxonômica e sem sobrescrever entradas.','',
 '## Resultados de validação','',
 f'- Árvore completa: {len(tips)} pontas únicas, sendo {len(microlicia_tipset)} espécies de *Microlicia* e {len(tips)-len(microlicia_tipset)} pontas de outros gêneros; ultramétrica (amplitude raiz–ponta = {root_range:.3g}); altura da raiz = {root_age:.6f} unidades numéricas da árvore. O XML disponível declara units={dating_units}; médias/priores avaliados: {", ".join(str(c["mean"]) for c in calibrations)}.',
 '- [Inferência] A escala pretendida é Ma: 29,47 (Marcetieae), 30,03 (Rhexieae) e 22,39 (Lavoisiereae) correspondem às idades da Tabela 3 do capítulo de Reginato et al. (2022), cuja coluna está em Ma. O XML, porém, declara `years`; essa divergência deve ser reconciliada com a configuração efetivamente executada no BEAST antes de publicação ou reexecução da datação.',
@@ -540,8 +564,9 @@ f'- Cobertura ligada à subárvore de *Microlicia*: {matched_record_count} regis
 '- `occurrence_coordinates_scatter.png`: pontos de *Microlicia* em longitude/latitude decimal, sem projeção ou limites políticos.',
 '- `stamen_trait_state_counts.png`: frequências dos estados dos três caracteres de *Microlicia*.',
 '- `exploratory_trait_latitude.png`: distribuição descritiva da latitude média por estado nos dois primeiros caracteres de *Microlicia*.',
-'', '## Limites do Piloto 1.1','',
-'- As análises comparativas excluem pontas de gêneros diferentes de *Microlicia*; a figura da MCC mostra todas as 153 pontas.',
+'', '## Conferência de nomes e limites do Piloto 1.2','',
+'- `name_reconciliation_occurrences.csv` registra rótulo original, normalização de formato, rótulo da MCC usado no cruzamento, regra aplicada e inclusão/exclusão. `name_reconciliation_stamen_traits.csv` faz a conferência da matriz de estames. Nomes sem correspondência permanecem na auditoria e não entram nas análises ancoradas na árvore.',
+'- As análises comparativas excluem pontas de gêneros diferentes de *Microlicia*; a figura da MCC mostra todas as pontas da árvore.',
 '- Táxons da entrada sem correspondência com a árvore e registros de outros gêneros constam em tabelas de auditoria separadas; não entram nos resumos de *Microlicia*.',
 '- Nove registros de *Microlicia* sem par de coordenadas numérico válido não entram nos resumos espaciais.',
 '- Não há CRS documentado, áreas biogeográficas codificadas nem camadas ambientais neste piloto. A execução usa a MCC; a amostra posterior não foi processada nesta versão.',
@@ -549,5 +574,5 @@ f'- Cobertura ligada à subárvore de *Microlicia*: {matched_record_count} regis
 '', '## Arquivos de saída','',
 '`run_metadata.json` registra hashes, versões e limites. O arquivo original da MCC e os arquivos de entrada não são sobrescritos.'
 ]
-(OUT/'relatorio_piloto_1_1.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+(OUT/'relatorio_piloto_1_2.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
 print(json.dumps({'output_dir':str(OUT),'tips':len(tips),'root_age_tree_units':root_age,'root_to_tip_range':root_range,'occurrence_records':len(occ),'coordinates_valid':coord_complete,'coordinates_review':coord_bad,'occurrence_taxa':int(occ.taxon_raw.nunique()),'tree_matched_taxa':matched_unique,'unmatched_taxa':unmatched_unique,'matched_records':matched_record_count,'matched_valid_records':matched_valid_record_count,'trait_taxa':len(traits),'trait_exact_tree_matches':int(traits.taxon.isin(tipset).sum()),'trait_reconstructions':recon_summary},ensure_ascii=False,indent=2))
