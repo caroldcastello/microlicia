@@ -1,27 +1,37 @@
-# Workflow do piloto 1.0
+# Workflow Microlicia — Piloto 1.1
 
-## 1. Filtro de espécies
+## Escopo
 
-As ocorrências foram cruzadas com as 153 pontas da MCC. A regra de correspondência remove somente espaços entre `m_` e o epíteto. Foram mantidos 10.208 registros de 142 espécies. Os 117 registros de 24 nomes sem correspondência foram excluídos da tabela de análise, sem sinonimização ou correção de grafia. A tabela de auditoria de nomes preserva as contagens excluídas.
+As análises de ocorrências, morfologia de estames e reconstrução de estados ancestrais são restritas às pontas de *Microlicia* da MCC. A figura da árvore datada mostra todas as 153 pontas da árvore, incluindo os gêneros usados como grupos externos na datação. Os dois rótulos corrigidos nas ocorrências são recodificados em memória na árvore e na matriz de estames, sem modificar o arquivo MCC original.
 
-A tabela de estames tem um registro para cada uma das 153 pontas e três caracteres categóricos completos. A coluna de táxon é o primeiro campo do CSV e veio sem nome de cabeçalho.
+## Entradas
 
-## 2. Verificações da MCC e datas
+- `data/input/teste_datacao_MCC.tree`
+- `data/input/ocorrencias.xlsx.csv`
+- `data/input/estames.csv`
+- `data/metadata/fonte_datação.json` (referência às unidades/priores quando o XML do BEAST não está no repositório)
 
-O script confirma ponta única, comprimentos de ramo e ultrametricidade. A altura da raiz foi calculada em unidades numéricas da árvore. A Tabela 3 do capítulo de Reginato et al. (2022) identifica em Ma as idades 29,47 Ma (coroa de Marcetieae), 30,03 Ma (Rhexieae) e 22,39 Ma (Lavoisiereae), coincidentes com os valores dos priors no XML disponível.
+## Execução
 
-[Inferência] Isso aponta que a escala pretendida é Ma e que a raiz da MCC representa aproximadamente 28,048 Ma. O XML traz `units="years"`; o valor da tabela e o rótulo do XML divergem. O relatório conserva essa ressalva e não altera o XML nem reexecuta o BEAST.
+```bash
+python scripts/pilot_1_0.py
+```
 
-## 3. Estames
+Para gerar somente a figura da MCC completa:
 
-O script calcula frequências e reconstrói estados ancestrais por máxima verossimilhança sob CTMC de taxas iguais (ER), com priori uniforme na raiz, usando apenas a MCC. As probabilidades por nó são estimativas dependentes do modelo. Antes de resultados finais, comparar ER com modelos alternativos e resumir a incerteza entre árvores posteriores.
+```bash
+python scripts/pilot_1_0.py --tree-figure-only
+```
 
-## 4. Ocorrências
+O workflow do GitHub Actions salva a pasta `results/` como artefato. As análises comparativas usam a subárvore induzida pelas pontas de *Microlicia*; a figura da MCC usa a árvore original e todos os rótulos.
 
-Os resumos usam registros com latitude e longitude numéricas dentro dos limites globais. O filtro não valida que uma coordenada esteja no lugar certo. Os nove pares fora dos limites ou incompletos são listados para revisão. Resumos em graus são descritivos; não estimam área geográfica e não substituem revisão espacial.
+## Figuras
 
-O script opcional `scripts/ruhere_duplicate_qc.R` usa `RuHere::flag_duplicates()` para sinalizar coordenadas repetidas dentro de espécie. Ele exporta os sinalizadores e mantém todas as linhas: a decisão de remover qualquer registro exige inspeção de vouchers e metadados.
+- `dated_tree_all_taxa.png` e `dated_tree_all_taxa.pdf`: árvore datada com 153 nomes científicos completos; *Microlicia* destacada em verde. O eixo usa unidades numéricas da árvore até que a escala pretendida seja reconciliada com a configuração BEAST.
+- `occurrence_coordinates_scatter.png`: registros de *Microlicia* com coordenadas numericamente válidas.
+- `stamen_trait_state_counts.png`: frequências dos três caracteres de estames em *Microlicia*.
+- `exploratory_trait_latitude.png`: resumo exploratório de latitude por estados morfológicos de *Microlicia*.
 
-## 5. Reprodutibilidade
+## Auditoria
 
-`python scripts/pilot_1_0.py` gera tabelas e figuras em `results/`; a execução no GitHub Actions salva a pasta como artefato. O manifesto guarda versões, parâmetros, hashes dos arquivos e exclusões. A árvore posterior e os logs extensos não são necessários para o piloto MCC e permanecem fora do Git.
+`occurrence_taxon_crosswalk.csv` separa correspondências com a MCC completa e inclusão nas análises de *Microlicia*. `occurrence_outgroups_excluded_from_analyses.csv` lista registros dos demais gêneros que foram excluídos do foco. `occurrence_taxa_unmatched.csv` lista nomes não encontrados na árvore, e `microlicia_taxa_without_occurrences.csv` lista pontas de *Microlicia* sem registro correspondente.
