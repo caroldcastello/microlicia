@@ -1,4 +1,4 @@
-# Microlicia — piloto de análises 1.1
+# Microlicia — piloto de análises 1.2
 
 Repositório de análises reproduzíveis com a árvore datada MCC, dados de ocorrência e caracteres de estames. As análises de ocorrências, estames e reconstrução ancestral têm foco somente em *Microlicia*. A figura da MCC inclui todos os táxons da árvore.
 
@@ -29,11 +29,11 @@ Essa etapa cria `results/dated_tree_all_taxa.png` e `results/dated_tree_all_taxa
 
 Para refazer o processamento em outra pasta, defina `PILOT_INPUT_DIR` e `PILOT_OUTPUT_DIR`. A execução requer os arquivos em `data/input/` e o registro de calibração em `data/metadata/`.
 
-Também é possível executar o workflow no GitHub em **Actions → Microlicia pilot 1.1 → Run workflow**. O relatório e os arquivos de resultados serão disponibilizados como artefato da execução.
+Também é possível executar o workflow no GitHub em **Actions → Microlicia pilot 1.2 → Run workflow**. O relatório e os arquivos de resultados serão disponibilizados como artefato da execução.
 
 ## Resultados e interpretação
 
-- O relatório histórico do piloto 1.0 está em [`docs/relatorio_piloto_1_0.md`](docs/relatorio_piloto_1_0.md); o relatório atualizado é gerado em `results/relatorio_piloto_1_1.md` ao executar a versão 1.1.
+- O relatório histórico do piloto 1.0 está em [`docs/relatorio_piloto_1_0.md`](docs/relatorio_piloto_1_0.md); o relatório atualizado é gerado em `results/relatorio_piloto_1_2.md` ao executar a versão 1.2.
 - Metadados e hashes da execução: [`data/metadata/pilot_1_0_metadata.json`](data/metadata/pilot_1_0_metadata.json).
 - Fonte dos valores de calibração e observação sobre escala: [`data/metadata/fonte_datação.json`](data/metadata/fonte_datação.json).
 - Próximas análises possíveis e limites: [`docs/proximas_analises.md`](docs/proximas_analises.md).
