@@ -1,9 +1,10 @@
 # Ideias dos documentos: o que cabe fazer
 
-## Já implementado no Piloto 1.0
+## Já implementado no Piloto 1.1
 
-- Filtrar as ocorrências para as espécies com pontas na MCC, guardar a correspondência de nomes e documentar exclusões.
+- Filtrar ocorrências e estames para as espécies de *Microlicia* com pontas na MCC, guardar a correspondência de nomes e documentar exclusões.
 - Checar a árvore MCC, sua ultrametricidade e altura numérica.
+- Gerar uma figura da MCC completa, com os 153 táxons nomeados; *Microlicia* fica destacada.
 - Resumir os três caracteres categóricos de estames e reconstruir estados ancestrais como uma exploração inicial.
 - Cruzar caracteres de estames e resumos geográficos descritivos.
 - Gerar hashes, versões do software, tabelas, gráficos e relatório.
@@ -30,6 +31,6 @@ RuHere foi incluído como etapa opcional de qualidade espacial, começando por d
 ## Próximas decisões científicas
 
 1. Conferir com o XML efetivamente executado por que a coluna/atributo de unidades está como `years` quando os valores vêm de uma tabela em Ma.
-2. Revisar os nove registros sem coordenadas válidas e os sinalizados por RuHere.
+2. Revisar os registros sem coordenadas válidas e os sinalizados por RuHere na versão atualizada das ocorrências; a contagem deve ser regenerada após a troca do arquivo.
 3. Decidir áreas e codificação de distribuição antes de BioGeoBEARS, BAMM ou MuSSE.
 4. Comparar reconstruções de estames em modelos alternativos e na amostra posterior de árvores antes de usar as probabilidades como resultado principal.
