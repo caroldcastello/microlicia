@@ -8,7 +8,7 @@ files:
 
 occurrence_format:
   delimiter: ";"
-  encoding: "UTF-8 with BOM"
+  encoding: "UTF-8"
   original_taxon_column: "Taxon_original"
   tree_taxon_column: "taxon_tree"
   longitude_column: "Longitude_decimal"
@@ -17,7 +17,7 @@ occurrence_format:
 
 stamen_traits:
   delimiter: ";"
-  encoding: "UTF-8 with BOM"
+  encoding: "UTF-8"
   taxon_column: ""
   categorical_columns:
     - "(0) dimorphic (1) subisomorphic (2) isomorphic"
