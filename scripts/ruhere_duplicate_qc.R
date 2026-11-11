@@ -11,7 +11,7 @@ out_csv <- "results/ruhere_duplicate_qc.csv"
 out_json <- "results/ruhere_duplicate_qc_summary.json"
 dir.create("results", showWarnings = FALSE, recursive = TRUE)
 
-occ <- read.csv(input_occ, sep = ";", fileEncoding = "CP1252", check.names = FALSE,
+occ <- read.csv(input_occ, sep = ";", fileEncoding = "UTF-8", check.names = FALSE,
                 stringsAsFactors = FALSE)
 tree <- ape::read.nexus(input_tree)
 if (inherits(tree, "multiPhylo")) stop("Expected one MCC tree.")
