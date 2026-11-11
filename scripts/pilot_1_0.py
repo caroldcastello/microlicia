@@ -273,31 +273,41 @@ def plot_dated_tree(root, path_png, path_pdf):
     collect(root)
     tips=[n for n in nodes if not n.children]
     labels={n.name:display_species_name(n.name) for n in tips}
-    ordered=sorted(tips,key=lambda n:labels[n.name].casefold())
+    # Keep the tip order encoded in the MCC instead of sorting species names.
+    # This preserves the tree's visual clade order and makes the branching easier
+    # to follow from the root to the tips.
+    ordered=tips
     y_by_id={n.ident:i for i,n in enumerate(ordered)}
+    clade_tips={}
+    def collect_clade_tips(n):
+        if not n.children:result={n.name}
+        else:
+            result=set().union(*(collect_clade_tips(c) for c in n.children))
+        clade_tips[n.ident]=result
+        return result
+    collect_clade_tips(root)
     def set_y(n):
         if not n.children:return y_by_id[n.ident]
-        ys=[set_y(c) for c in sorted(n.children,key=lambda c:min(labels[z].casefold() for z in descendants_nodes(c)))]
+        ys=[set_y(c) for c in n.children]
         y_by_id[n.ident]=sum(ys)/len(ys)
         return y_by_id[n.ident]
-    def descendants_nodes(n):
-        if not n.children:return [n.name]
-        return sum((descendants_nodes(c) for c in n.children),[])
     set_y(root)
     root_depth=min(n.depth for n in nodes)
     root_depth=min(root_depth,root.depth)
     tree_height=max(n.depth for n in tips)-root.depth
-    fig_h=max(12.0,0.145*len(tips))
-    fig,ax=plt.subplots(figsize=(17,fig_h))
+    fig_h=max(16.0,0.23*len(tips))
+    fig,ax=plt.subplots(figsize=(18,fig_h))
     for n in nodes:
         if not n.children:continue
         child_y=[y_by_id[c.ident] for c in n.children]
-        ax.vlines(n.depth,min(child_y),max(child_y),color='#7b8580',lw=.55,zorder=1)
+        ax.vlines(n.depth,min(child_y),max(child_y),color='#a0a8a3',lw=.55,zorder=1)
         for c in n.children:
-            ax.hlines(y_by_id[c.ident],n.depth,c.depth,color='#52685a',lw=.55,zorder=1)
+            is_microlicia_clade=all(t.startswith('m_') for t in clade_tips[c.ident])
+            edge_color='#2d7250' if is_microlicia_clade else '#65727c'
+            ax.hlines(y_by_id[c.ident],n.depth,c.depth,color=edge_color,lw=.72,zorder=1)
     for tip in ordered:
         color='#2d7250' if tip.name.startswith('m_') else '#46515b'
-        ax.text(tip.depth+tree_height*.006,y_by_id[tip.ident],labels[tip.name],va='center',ha='left',fontsize=6.5,fontstyle='italic',color=color)
+        ax.text(tip.depth+tree_height*.008,y_by_id[tip.ident],labels[tip.name],va='center',ha='left',fontsize=7.2,fontstyle='italic',color=color)
     root_age=root.age
     depth_max=max(n.depth for n in tips)
     ticks=np.linspace(root.depth,depth_max,6)
@@ -305,10 +315,12 @@ def plot_dated_tree(root, path_png, path_pdf):
     ax.set_xticklabels([f'{root_age-(x-root.depth):.1f}' for x in ticks])
     ax.set_xlabel('Idade antes do presente (unidades numéricas da MCC)')
     ax.set_yticks([])
-    ax.set_title(f'Árvore datada MCC — todos os táxons ({len(tips)} espécies)',loc='left',fontsize=13,pad=12)
+    ax.set_title(f'Árvore datada MCC — {len(tips)} espécies; {len([t for t in tips if t.name.startswith("m_")])} de Microlicia',loc='left',fontsize=14,pad=14)
+    ax.scatter([root.depth],[y_by_id[root.ident]],s=22,marker='o',color='#222222',zorder=3)
+    ax.annotate('raiz',xy=(root.depth,y_by_id[root.ident]),xytext=(tree_height*.015,y_by_id[root.ident]-4),fontsize=8,color='#222222',arrowprops={'arrowstyle':'-','color':'#222222','lw':.6})
     from matplotlib.lines import Line2D
     ax.legend(handles=[Line2D([0],[0],color='#2d7250',lw=2,label='Microlicia'),Line2D([0],[0],color='#46515b',lw=2,label='Outros táxons da árvore')],loc='lower right',frameon=False)
-    ax.set_xlim(root.depth,depth_max+tree_height*.38)
+    ax.set_xlim(root.depth-tree_height*.015,depth_max+tree_height*.42)
     ax.set_ylim(-1,len(tips))
     ax.invert_yaxis()
     ax.grid(axis='x',alpha=.2,lw=.5)
