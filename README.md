@@ -33,7 +33,7 @@ Também é possível executar o workflow no GitHub em **Actions → Microlicia p
 
 ## Resultados e interpretação
 
-- O relatório histórico do piloto 1.0 está em [`docs/relatorio_piloto_1_0.md`](docs/relatorio_piloto_1_0.md); o relatório atualizado é gerado em `results/relatorio_piloto_1_2.md` ao executar a versão 1.3.
+- O relatório histórico do piloto 1.0 está em [`docs/relatorio_piloto_1_0.md`](docs/relatorio_piloto_1_0.md); o relatório atualizado é gerado em `results/relatorio_piloto_1_3.md` ao executar a versão 1.3.
 - Metadados e hashes da execução: [`data/metadata/pilot_1_0_metadata.json`](data/metadata/pilot_1_0_metadata.json).
 - Fonte dos valores de calibração e observação sobre escala: [`data/metadata/fonte_datação.json`](data/metadata/fonte_datação.json).
 - Próximas análises possíveis e limites: [`docs/proximas_analises.md`](docs/proximas_analises.md).
