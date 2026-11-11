@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pilot 1.2: MCC tree, stamen morphology, and occurrence summaries.
+"""Pilot 1.3: MCC tree, stamen morphology, and occurrence summaries.
 
 Run from this directory or elsewhere:
   PILOT_INPUT_DIR=/path/to/input python3 pilot_1_0.py
@@ -18,7 +18,8 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 from scipy.linalg import expm
-from scipy.optimize import minimize_scalar
+from scipy.optimize import minimize, minimize_scalar
+from scipy.stats import chi2
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -236,6 +237,130 @@ def discrete_er(root, tip_states, states):
     root_prob=posterior[root.ident]
     return {'q_per_tree_unit':q,'log_likelihood':logl,'root_probs':root_prob,'node_rows':node_rows,'states':states}
 
+def mk_loglikelihood(root, tip_states, state_order, Q, return_posteriors=False):
+    """Pruning likelihood for a Mk CTMC, with scaling and optional node marginals."""
+    k=len(state_order); index={state:i for i,state in enumerate(state_order)}
+    nodes=[]
+    def collect(n):
+        nodes.append(n)
+        for child in n.children:collect(child)
+    collect(root)
+    pmat={n.ident:expm(Q*n.length) for n in nodes if n is not root}
+    inside={}; scales={}; messages={}
+    for node in reversed(nodes):
+        if not node.children:
+            vec=np.eye(k)[index[int(tip_states[node.name])]]
+            scale=0.0
+        else:
+            vec=np.ones(k); scale=0.0
+            for child in node.children:
+                msg=pmat[child.ident]@inside[child.ident]
+                messages[child.ident]=msg
+                vec*=msg; scale+=scales[child.ident]
+        z=float(vec.max())
+        if z<=0 or not math.isfinite(z):return (-math.inf,None) if return_posteriors else -math.inf
+        inside[node.ident]=vec/z; scales[node.ident]=scale+math.log(z)
+    prior=np.full(k,1/k)
+    root_prob=prior@inside[root.ident]
+    logl=math.log(root_prob)+scales[root.ident]
+    if not return_posteriors:return logl
+    outside={root.ident:prior}; posterior={root.ident:prior*inside[root.ident]/root_prob}
+    for node in nodes:
+        if not node.children:continue
+        for child in node.children:
+            context=outside[node.ident].copy()
+            for sibling in node.children:
+                if sibling.ident!=child.ident:context*=messages[sibling.ident]
+            out=context@pmat[child.ident]
+            outside[child.ident]=out
+            w=out*inside[child.ident]
+            posterior[child.ident]=w/w.sum()
+    rows=[]
+    for node in nodes:
+        if node.children:
+            row={'node_id':node.ident+1,'is_root':node is root,'age_tree_units':node.age}
+            for j,state in enumerate(state_order):row[f'P_state_{state}']=float(posterior[node.ident][j])
+            row['most_supported_state']=state_order[int(np.argmax(posterior[node.ident]))]
+            rows.append(row)
+    return logl,{'root_probs':posterior[root.ident],'node_rows':rows}
+
+def fit_binary_mk(root, tip_states, state_order, model):
+    """Fit ER/SYM/ARD Mk models; for two states, ER and SYM are equivalent."""
+    if len(state_order)!=2:raise ValueError('This pilot model comparison expects two observed states per trait')
+    n=len(state_order); bounds=[(-10,3)]*(1 if model in {'ER','SYM'} else 2)
+    def q_from(theta):
+        Q=np.zeros((n,n))
+        if model in {'ER','SYM'}:Q[0,1]=Q[1,0]=math.exp(theta[0])
+        else:Q[0,1]=math.exp(theta[0]);Q[1,0]=math.exp(theta[1])
+        np.fill_diagonal(Q,-Q.sum(axis=1))
+        return Q
+    def objective(theta):return -mk_loglikelihood(root,tip_states,state_order,q_from(theta))
+    x0=np.array([-3.5] if model in {'ER','SYM'} else [-3.5,-3.5])
+    opt=minimize(objective,x0,method='L-BFGS-B',bounds=bounds,options={'maxiter':300,'ftol':1e-10})
+    Q=q_from(opt.x); ll,post=mk_loglikelihood(root,tip_states,state_order,Q,True)
+    k=len(opt.x); aic=2*k-2*ll; nobs=len(tip_states)
+    aicc=aic+(2*k*(k+1)/(nobs-k-1))
+    return {'model':model,'Q':Q,'log_rates':opt.x.tolist(),'log_likelihood':ll,'n_parameters':k,'AIC':aic,'AICc':aicc,'converged':bool(opt.success),'rate_bound_hit':bool(np.any((opt.x<=-10+1e-3)|(opt.x>=3-1e-3))),'root_probs':post['root_probs'],'node_rows':post['node_rows']}
+
+def pair_Q(theta, dependent):
+    """Four-state CTMC for two binary traits under independent or dependent evolution."""
+    Q=np.zeros((4,4)); rates=np.exp(theta)
+    for i in range(4):
+        a,b=divmod(i,2)
+        if dependent:
+            Q[i,((1-a)*2+b)]=rates[2*i]
+            Q[i,(a*2+(1-b))]=rates[2*i+1]
+        else:
+            # independent directional rates: A(0->1, 1->0), B(0->1, 1->0)
+            Q[i,((1-a)*2+b)]=rates[0 if a==0 else 1]
+            Q[i,(a*2+(1-b))]=rates[2 if b==0 else 3]
+    np.fill_diagonal(Q,-Q.sum(axis=1))
+    return Q
+
+def fit_pair_model(root, tip_states, dependent, x0=None):
+    k=8 if dependent else 4
+    if x0 is None:x0=np.full(k,-3.5)
+    def objective(theta):return -mk_loglikelihood(root,tip_states,[0,1,2,3],pair_Q(theta,dependent))
+    opt=minimize(objective,np.asarray(x0),method='L-BFGS-B',bounds=[(-10,3)]*k,options={'maxiter':500,'ftol':1e-9,'maxls':30})
+    Q=pair_Q(opt.x,dependent); ll=mk_loglikelihood(root,tip_states,[0,1,2,3],Q)
+    return {'log_likelihood':ll,'n_parameters':k,'AIC':2*k-2*ll,'converged':bool(opt.success),'theta':opt.x,'Q':Q,'rate_bound_hit':bool(np.any((opt.x<=-10+1e-3)|(opt.x>=3-1e-3)))}
+
+def brownian_covariance(root):
+    """Shared-root-path covariance matrix for species at the MCC tips."""
+    paths={}
+    def walk(node,path):
+        new=path+[node]
+        if not node.children:paths[node.name]=new
+        for child in node.children:walk(child,new)
+    walk(root,[])
+    names=list(paths); V=np.zeros((len(names),len(names)))
+    for i,a in enumerate(names):
+        for j in range(i+1):
+            b=names[j]; common=0.0
+            for na,nb in zip(paths[a][1:],paths[b][1:]):
+                if na.ident!=nb.ident:break
+                common+=na.length
+            V[i,j]=V[j,i]=common
+    V+=np.eye(len(names))*1e-8
+    return names,V
+
+def pgls_likelihood_ratio(y, X, V):
+    """Gaussian PGLS with a Brownian covariance, compared to intercept-only."""
+    def fit(design):
+        sign,logdet=np.linalg.slogdet(V)
+        if sign<=0:raise ValueError('Brownian covariance is not positive definite')
+        Vinv=np.linalg.inv(V)
+        beta=np.linalg.solve(design.T@Vinv@design,design.T@Vinv@y)
+        residual=y-design@beta
+        rss=float(residual.T@Vinv@residual)
+        sigma2=max(rss/len(y),1e-12)
+        ll=-0.5*(len(y)*(math.log(2*math.pi)+1+math.log(sigma2))+logdet)
+        return ll,beta
+    X0=np.ones((len(y),1))
+    ll0,_=fit(X0); ll1,beta=fit(X)
+    df=X.shape[1]-1; lrt=max(0.0,2*(ll1-ll0))
+    return {'logLik_null':ll0,'logLik_trait':ll1,'LRT':lrt,'df':df,'p_value':float(chi2.sf(lrt,df)),'coefficients':beta.tolist()}
+
 def write_csv(df,path):df.to_csv(path,index=False,encoding='utf-8-sig')
 
 def sha256(p):
@@ -435,14 +560,27 @@ trait_labels={
  'trait1':{0:'dimórficos',1:'subisomórficos',2:'isomórficos'},
  'trait2':{0:'concolores',1:'bicolores'},
  'trait3':{0:'tetrasporangiadas',1:'poliesporangiadas'}}
-trait_freq=[]; recon_results={}
+trait_freq=[]; recon_results={}; mk_model_rows=[]; model_averaged_roots={}; selected_trait_models={}
 for col in trait_meta:
     counts=traits[col].value_counts(dropna=True).sort_index()
     for state,count in counts.items():
         trait_freq.append({'trait':trait_meta[col]['name'],'trait_column':col,'state_code':int(state),'state_label':trait_labels[col].get(int(state),str(state)),'n_species':int(count),'proportion_of_nonmissing':float(count/counts.sum())})
     state_map=dict(zip(traits.taxon,traits[col]))
     states=sorted(int(x) for x in traits[col].dropna().unique())
-    recon=discrete_er(root,state_map,states); recon_results[col]=recon
+    fitted=[fit_binary_mk(root,state_map,states,model) for model in ['ER','SYM','ARD']]
+    best=min(fitted,key=lambda fit:fit['AICc'])
+    unique_fits=[fit for fit in fitted if fit['model']!='SYM']
+    raw_weights=np.exp(-0.5*np.array([fit['AICc'] for fit in unique_fits])+0.5*min(fit['AICc'] for fit in unique_fits))
+    weights=raw_weights/raw_weights.sum()
+    weight_by_model={fit['model']:float(w) for fit,w in zip(unique_fits,weights)}
+    root_avg=sum(w*fit['root_probs'] for w,fit in zip(weights,unique_fits))
+    model_averaged_roots[col]=root_avg; selected_trait_models[col]=best['model']
+    for fit in fitted:
+        fit['akaike_weight']=weight_by_model.get(fit['model'],0.0)
+        mk_model_rows.append({'trait':trait_meta[col]['name'],'trait_column':col,'model':fit['model'],'note':'SYM equals ER for binary characters; omitted as a separate model in Akaike weighting' if fit['model']=='SYM' else '', 'n_species':len(state_map),'n_parameters':fit['n_parameters'],'log_likelihood':fit['log_likelihood'],'AIC':fit['AIC'],'AICc':fit['AICc'],'delta_AICc':fit['AICc']-best['AICc'],'Akaike_weight_unique_models':fit['akaike_weight'],'converged':fit['converged'],'rate_parameter_at_optimization_bound':fit['rate_bound_hit'],'selected_by_AICc':fit is best,'rates_matrix':json.dumps(fit['Q'].tolist())})
+    ll,posterior=mk_loglikelihood(root,state_map,states,best['Q'],True)
+    recon={'q_per_tree_unit':best['Q'].tolist(),'log_likelihood':ll,'root_probs':posterior['root_probs'],'node_rows':posterior['node_rows'],'states':states,'selected_model':best['model']}
+    recon_results[col]=recon
     rows=[]
     for row in recon['node_rows']:
         row['trait']=trait_meta[col]['name']; row['trait_column']=col
@@ -450,8 +588,34 @@ for col in trait_meta:
         rows.append(row)
     write_csv(pd.DataFrame(rows),OUT/f'ancestral_reconstruction_{col}.csv')
     for sidx,state in enumerate(states):
-        trait_freq.append({'trait':trait_meta[col]['name'],'trait_column':col,'state_code':state,'state_label':trait_labels[col].get(state,str(state)),'n_species':int(counts.get(state,0)),'proportion_of_nonmissing':float(counts.get(state,0)/counts.sum()),'root_posterior':float(recon['root_probs'][sidx])})
+        trait_freq.append({'trait':trait_meta[col]['name'],'trait_column':col,'state_code':state,'state_label':trait_labels[col].get(state,str(state)),'n_species':int(counts.get(state,0)),'proportion_of_nonmissing':float(counts.get(state,0)/counts.sum()),'root_posterior_selected_model':float(recon['root_probs'][sidx]),'root_posterior_AICc_model_averaged':float(root_avg[sidx]),'selected_model':best['model']})
+write_csv(pd.DataFrame(mk_model_rows),OUT/'stamen_trait_evolution_model_comparison.csv')
 write_csv(pd.DataFrame(trait_freq).drop_duplicates(['trait_column','state_code'],keep='last'),OUT/'stamen_trait_frequencies_and_root_posterior.csv')
+
+# Pagel-style comparison of independent vs dependent evolution for each pair
+# of binary stamen traits. The tree remains the MCC and is not tree-averaged.
+pair_rows=[]
+trait_cols=list(trait_meta)
+for ia in range(len(trait_cols)):
+    for ib in range(ia+1,len(trait_cols)):
+        ca,cb=trait_cols[ia],trait_cols[ib]
+        shared=traits[['taxon',ca,cb]].dropna()
+        pair_states={r.taxon:int(r[ca])*2+int(r[cb]) for _,r in shared.iterrows()}
+        independent=fit_pair_model(root,pair_states,False)
+        t=independent['theta']
+        dep_start=np.array([t[0],t[2],t[0],t[3],t[1],t[2],t[1],t[3]],dtype=float)
+        dependent=fit_pair_model(root,pair_states,True,dep_start)
+        lrt=max(0.0,2*(dependent['log_likelihood']-independent['log_likelihood']))
+        p=float(chi2.sf(lrt,4))
+        pair_counts=pd.Series(list(pair_states.values())).value_counts().to_dict()
+        pair_rows.append({'trait_1':trait_meta[ca]['name'],'trait_1_column':ca,'trait_2':trait_meta[cb]['name'],'trait_2_column':cb,'n_species':len(shared),'n_species_joint_states_00_01_10_11':';'.join(str(int(pair_counts.get(s,0))) for s in range(4)),'independent_log_likelihood':independent['log_likelihood'],'dependent_log_likelihood':dependent['log_likelihood'],'LRT':lrt,'df':4,'p_value':p,'AIC_independent':independent['AIC'],'AIC_dependent':dependent['AIC'],'delta_AIC_dependent_minus_independent':dependent['AIC']-independent['AIC'],'independent_converged':independent['converged'],'dependent_converged':dependent['converged'],'independent_rate_at_bound':independent['rate_bound_hit'],'dependent_rate_at_bound':dependent['rate_bound_hit'],'dependent_rates_matrix':json.dumps(dependent['Q'].tolist())})
+if pair_rows:
+    pair_df=pd.DataFrame(pair_rows)
+    # Benjamini-Hochberg adjustment across the three prespecified pairwise tests.
+    order=np.argsort(pair_df.p_value.to_numpy()); ranked=pair_df.p_value.to_numpy()[order]
+    adj=np.minimum.accumulate((ranked*len(ranked)/np.arange(1,len(ranked)+1))[::-1])[::-1]
+    pair_df['p_value_BH']=np.nan; pair_df.loc[pair_df.index[order],'p_value_BH']=np.minimum(adj,1)
+    write_csv(pair_df,OUT/'stamen_trait_correlated_evolution.csv')
 
 # Joined species-level descriptive comparison of stamen categories and coordinate centroids.
 geo_lookup=species_geo.set_index('taxon_match')
@@ -459,7 +623,39 @@ joined=traits.copy()
 joined['in_tree']=joined.taxon.isin(micro_tipset)
 for c in ['latitude_mean','longitude_mean','n_records','latitude_span_degrees','longitude_span_degrees']:
     joined[c]=joined.taxon.map(geo_lookup[c])
+for c in ['latitude_median','longitude_median']:
+    joined[c]=joined.taxon.map(geo_lookup[c])
 write_csv(joined,OUT/'stamen_traits_with_occurrence_summaries.csv')
+
+# Exploratory PGLS: association of stamen states with species median latitude
+# and longitude. Occurrence sampling is not corrected here, so these are
+# hypothesis-generating tests rather than range or biogeographic inference.
+tip_order,Vfull=brownian_covariance(root)
+tip_pos={name:i for i,name in enumerate(tip_order)}
+pgls_rows=[]
+for col,meta in trait_meta.items():
+    state_order=sorted(int(x) for x in traits[col].dropna().unique())
+    for response in ['latitude_median','longitude_median']:
+        dat=joined[['taxon',col,response]].dropna()
+        dat=dat[dat.taxon.isin(tip_pos)].copy()
+        if len(state_order)<2 or len(dat)<10:continue
+        levels=sorted(int(x) for x in dat[col].unique())
+        if len(levels)<2:continue
+        indices=[tip_pos[t] for t in dat.taxon]
+        V=Vfull[np.ix_(indices,indices)]
+        y=dat[response].astype(float).to_numpy()
+        state_values=dat[col].astype(int).to_numpy()
+        X=np.column_stack([np.ones(len(dat))]+[(state_values==state).astype(float) for state in levels[1:]])
+        fit=pgls_likelihood_ratio(y,X,V)
+        row={'trait':meta['name'],'trait_column':col,'geographic_response':response,'n_species':len(dat),'states_in_model':';'.join(map(str,levels)),'reference_state':levels[0],**{k:v for k,v in fit.items() if k!='coefficients'}}
+        for ix,state in enumerate(levels[1:],start=1):row[f'coefficient_state_{state}_vs_{levels[0]}']=fit['coefficients'][ix]
+        pgls_rows.append(row)
+if pgls_rows:
+    pgls_df=pd.DataFrame(pgls_rows)
+    order=np.argsort(pgls_df.p_value.to_numpy()); ranked=pgls_df.p_value.to_numpy()[order]
+    adj=np.minimum.accumulate((ranked*len(ranked)/np.arange(1,len(ranked)+1))[::-1])[::-1]
+    pgls_df['p_value_BH']=np.nan; pgls_df.loc[pgls_df.index[order],'p_value_BH']=np.minimum(adj,1)
+    write_csv(pgls_df,OUT/'stamen_trait_geography_PGLS.csv')
 comparison=[]
 for col,meta in trait_meta.items():
     for state,label in trait_labels[col].items():
@@ -525,9 +721,9 @@ write_csv(overview,OUT/'occurrence_overview.csv')
 recon_summary=[]
 for col,meta in trait_meta.items():
     recon=recon_results[col]; states=recon['states']
-    recon_summary.append({'trait':meta['name'],'states':states,'q_per_tree_unit':recon['q_per_tree_unit'],'log_likelihood':recon['log_likelihood'],'root_probabilities':{trait_labels[col].get(s,str(s)):float(recon['root_probs'][i]) for i,s in enumerate(states)}})
+    recon_summary.append({'trait':meta['name'],'states':states,'selected_model':recon['selected_model'],'rate_matrix_per_tree_unit':recon['q_per_tree_unit'],'log_likelihood':recon['log_likelihood'],'selected_model_root_probabilities':{trait_labels[col].get(s,str(s)):float(recon['root_probs'][i]) for i,s in enumerate(states)},'AICc_model_averaged_root_probabilities':{trait_labels[col].get(s,str(s)):float(model_averaged_roots[col][i]) for i,s in enumerate(states)}})
 metadata={
-    'pilot_version':'1.2',
+    'pilot_version':'1.3',
     'run_time_utc':datetime.now(timezone.utc).isoformat(),
     'software':{'python':sys.version.split()[0],'platform':platform.platform(),'numpy':np.__version__,'pandas':pd.__version__,'scipy':__import__('scipy').__version__,'matplotlib':matplotlib.__version__},
     'inputs':{p.name:{'sha256':sha256(p),'bytes':p.stat().st_size} for p in (TREE_PATH,OCC_PATH,TRAIT_PATH,*( [XML_PATH] if XML_PATH.exists() else [DATING_REF] ),*( [FILTER_AUDIT] if FILTER_AUDIT.exists() else [] ))},
@@ -535,15 +731,15 @@ metadata={
     'tree':{'n_tips_all_taxa':len(tips),'n_unique_tips_all_taxa':len(tipset),'n_microlicia_tips':len(microlicia_tipset),'n_non_microlicia_tips':len(tipset)-len(microlicia_tipset),'root_age_tree_units':root_age,'microlicia_crown_age_tree_units':root.age,'root_to_tip_range':root_range,'xml_declared_model_units':dating_units,'calibration_priors':calibrations,'absolute_scale_interpretation':'Ma intended by matching calibration values to Reginato et al. 2022 Table 3 (Ma); XML label says years and must be reconciled before final inference','tree_tip_labels_used_as_analysis_reference':True,'tree_tip_labels_modified':False},
     'occurrence':{'n_records_input':len(occ_input),'n_records_microlicia_analyses':len(occ),'n_records_non_microlicia_tree_tips_excluded':int((occ_input.taxon_matched_full_tree & ~occ_input.taxon_matched_microlicia).sum()),'n_records_unmatched_to_full_tree':int((~occ_input.taxon_matched_full_tree).sum()),'n_coordinate_pairs_valid_in_microlicia':coord_complete,'n_coordinate_pairs_needing_review_in_microlicia':coord_bad,'n_unique_taxa_in_input':int(occ_input.taxon_raw.nunique()),'n_microlicia_taxa_matched':matched_unique,'n_unmatched_taxa_to_full_tree':unmatched_unique,'n_microlicia_tips_without_occurrences':len(tree_taxa_without_occ),'n_matched_records':matched_record_count,'n_matched_records_with_valid_coordinates':matched_valid_record_count,'duplicate_coordinate_pairs_global_within_microlicia':int(coord_complete-valid[['latitude','longitude']].drop_duplicates().shape[0]),'occurrence_to_tree_candidate_aliases':OCCURRENCE_TO_TREE_TIP_ALIASES,'alias_mapping_is_taxonomic_synonymy_claim':False,'name_audit_output':'name_reconciliation_occurrences.csv'},
     'stamen':{'n_rows_input_with_taxon':len(traits_all),'n_microlicia_rows':len(traits),'n_microlicia_taxa':int(traits.taxon.nunique()),'n_exact_matches_to_microlicia_tree':int(traits.taxon.isin(micro_tipset).sum()),'all_three_traits_nonmissing_for_microlicia_rows':bool(traits[list(trait_meta)].notna().all(axis=None))},
-    'ancestral_reconstruction_model':'Equal-rates CTMC (ER), maximum likelihood; MCC tree only; uniform root prior',
+    'analyses':{'stamen_evolution_models':'ER, SYM and ARD fit by maximum likelihood; AICc comparisons; ER and SYM are equivalent for binary traits','ancestral_reconstruction':'Maximum-likelihood reconstruction on the MCC; posterior state probabilities summarized for the AICc-selected model and AICc-weighted ER/ARD models; uniform root prior','correlated_evolution':'Pagel-style independent vs dependent four-state CTMC comparisons; LRT df=4 and AIC; sparse joint states and boundary estimates are flagged','trait_geography':'Exploratory Brownian PGLS of species median latitude/longitude against categorical stamen traits; BH adjustment across six tests; occurrence sampling not corrected'},
     'ancestral_reconstruction':recon_summary,
     'figures':{'dated_tree_all_taxa_png':'dated_tree_all_taxa.png','dated_tree_all_taxa_pdf':'dated_tree_all_taxa.pdf','tip_count':len(tips),'labels':'Full genus and species names; Microlicia highlighted separately'},
-    'limitations':['Only species belonging to Microlicia are included in occurrence and stamen analyses; tips from other genera remain in the full dated-tree figure.','Unmatched input taxa and occurrences for non-Microlicia tips are excluded from the Microlicia analyses and listed in separate crosswalk outputs.','Coordinate records marked invalid or missing in the supplied standardized CSV are excluded from spatial summaries; raw names and coordinates remain in the inputs.','Geographic output is descriptive in decimal degrees without map projection, area calculation, environmental rasters, or region coding.','This run uses the MCC tree only; uncertainty across posterior trees is not propagated.','The intended scale is provisionally interpreted as Ma because the calibration values match Reginato et al. (2022), Table 3; the XML unit label says years and should be reconciled with the executed BEAST settings.','Exploratory summaries by stamen state are descriptive and do not establish adaptation or causation.']
+    'limitations':['Only species belonging to Microlicia are included in occurrence and stamen comparative analyses; other MCC tips remain in the full dated-tree figure.','Unmatched input taxa and occurrences for non-Microlicia tips are listed in audit tables and excluded from Microlicia analyses.','Coordinate records marked invalid or missing are excluded from geographic summaries; raw rows remain in the inputs.','Geographic PGLS uses observed-record median coordinates without spatial bias correction; results are exploratory and do not estimate full species ranges.','Several joint stamen-state combinations are absent or rare, and some correlated-evolution rate estimates approach optimization bounds; those tests need cautious interpretation and sensitivity analysis.','This run uses the MCC tree only; uncertainty across posterior trees is not propagated.','The XML time-unit label remains to be reconciled with the calibration scale before interpreting rates in absolute time.','Associations do not establish adaptation or causation.']
 }
 (OUT/'run_metadata.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
 
 lines=[
-'# Microlicia — Piloto de análises 1.2','',
+'# Microlicia — Piloto de análises 1.3','',
 '## Dados e execução','',
 'As análises de ocorrências, estames e reconstrução ancestral incluem somente espécies de *Microlicia*. Uma figura separada apresenta a MCC completa, com os 153 táxons rotulados. Os nomes da árvore MCC definem a referência. Os rótulos originais de ocorrência e estames são preservados em tabelas de auditoria; os oito mapeamentos de grafia candidatos às pontas da MCC são usados apenas para cruzamento, sem afirmar sinonímia taxonômica e sem sobrescrever entradas.','',
 '## Resultados de validação','',
@@ -554,23 +750,27 @@ f'- Ocorrências: {len(occ_input)} registros na entrada; {len(occ)} registros de
 f'- Entre os registros incluídos de *Microlicia*, {coord_complete} pares de coordenadas estão completos e dentro dos limites numéricos de latitude/longitude; {coord_bad} precisam de revisão.',
 f'- Cobertura ligada à subárvore de *Microlicia*: {matched_record_count} registros de {matched_unique} táxons; {matched_valid_record_count} registros têm coordenadas válidas.',
 '', '## Estames e reconstrução ancestral','',
-'As frequências observadas estão em `stamen_trait_frequencies_and_root_posterior.csv`. A reconstrução ancestral foi feita na subárvore de *Microlicia*, por máxima verossimilhança sob um modelo de transições iguais (ER), com probabilidades iguais para os estados na raiz. As probabilidades por nó estão nos três arquivos `ancestral_reconstruction_trait*.csv`.','',
-*([f"- Probabilidade posterior estimada na raiz da subárvore de *Microlicia* para **{meta['name']}**: " + '; '.join(f"{state} = {prob:.3f}" for state,prob in recon['root_probabilities'].items()) + '.' for meta,recon in zip(trait_meta.values(),recon_summary)]),
+'As frequências observadas e as probabilidades na raiz estão em `stamen_trait_frequencies_and_root_posterior.csv`. `stamen_trait_evolution_model_comparison.csv` compara ER, SYM e ARD por AICc; como os três caracteres têm dois estados observados em *Microlicia*, ER e SYM têm a mesma parametrização. A reconstrução por nó usa o modelo de menor AICc, e o arquivo também registra probabilidades na raiz ponderadas pelos modelos ER/ARD.','',
+f"- Nos três caracteres, o menor AICc foi do modelo ARD; em {sum(1 for r in mk_model_rows if r['selected_by_AICc'] and r['rate_parameter_at_optimization_bound'])} deles uma taxa estimada ficou no limite numérico do ajuste, então a seleção de modelo e a reconstrução devem ser consideradas preliminares.",
+*([f"- Para **{meta['name']}**, o modelo selecionado por AICc foi {recon['selected_model']}; probabilidades na raiz ponderadas pelos modelos ER/ARD: " + '; '.join(f"{state} = {prob:.3f}" for state,prob in recon['AICc_model_averaged_root_probabilities'].items()) + '.' for meta,recon in zip(trait_meta.values(),recon_summary)]),
+'`stamen_trait_correlated_evolution.csv` compara evolução independente e dependente entre cada par de caracteres. Os testes exibem as contagens das quatro combinações de estados, ajustes por BH e sinalizam taxas na borda dos limites de otimização; combinações raras tornam os resultados exploratórios.','',
+f"- Os testes de evolução correlacionada tiveram p brutos entre {pair_df.p_value.min():.4g} e {pair_df.p_value.max():.4g}; todas as três estimativas dependentes atingiram ao menos um limite numérico e duas combinações conjuntas incluem zero ou um táxon. Portanto, não interpreto esses p-valores como evidência conclusiva de correlação evolutiva.",
 '[Inferência] A interpretação das taxas por Ma depende de resolver a divergência entre a tabela de calibração e o rótulo `years` do XML. A reconstrução depende do modelo e não incorpora variação entre árvores.','',
 '## Ocorrências e associação descritiva','',
-'`occurrence_species_summary_tree_matched.csv` resume número de registros, coordenadas únicas, centroides aritméticos e amplitude em graus por espécie de *Microlicia*. `stamen_traits_with_occurrence_summaries.csv` cruza caracteres e resumos geográficos. `exploratory_trait_geography_descriptives.csv` apresenta estatísticas descritivas por estado morfológico, sem teste causal. O critério de coordenada válida é numérico (latitude entre −90 e 90, longitude entre −180 e 180).','',
+'`occurrence_species_summary_tree_matched.csv` resume registros e coordenadas observadas por espécie. `stamen_trait_geography_PGLS.csv` traz testes filogenéticos exploratórios de associação entre os estados de estames e a latitude/longitude mediana por espécie, com ajuste BH. `exploratory_trait_geography_descriptives.csv` apresenta estatísticas descritivas por estado. Coordenadas observadas não equivalem à distribuição geográfica completa; não foram corrigidos viés de coleta nem esforço amostral.','',
+f"- Nos seis testes PGLS, nenhum p-valor permaneceu abaixo de 0,05 após ajuste BH (menor p ajustado = {pgls_df.p_value_BH.min():.3f}); isso não demonstra ausência de relação, mas não houve associação detectada neste piloto.",
 '## Figuras','',
 '- `dated_tree_all_taxa.png` e `dated_tree_all_taxa.pdf`: árvore datada MCC completa, com as 153 espécies identificadas por binômios; *Microlicia* aparece destacada em verde. O eixo usa as unidades numéricas da MCC enquanto a escala das calibrações é reconciliada.',
 '- `occurrence_coordinates_scatter.png`: pontos de *Microlicia* em longitude/latitude decimal, sem projeção ou limites políticos.',
 '- `stamen_trait_state_counts.png`: frequências dos estados dos três caracteres de *Microlicia*.',
 '- `exploratory_trait_latitude.png`: distribuição descritiva da latitude média por estado nos dois primeiros caracteres de *Microlicia*.',
-'', '## Conferência de nomes e limites do Piloto 1.2','',
+'', '## Conferência de nomes e limites do Piloto 1.3','',
 '- `name_reconciliation_occurrences.csv` registra rótulo original, normalização de formato, rótulo da MCC usado no cruzamento, regra aplicada e inclusão/exclusão. `name_reconciliation_stamen_traits.csv` faz a conferência da matriz de estames. Nomes sem correspondência permanecem na auditoria e não entram nas análises ancoradas na árvore.',
 '- As análises comparativas excluem pontas de gêneros diferentes de *Microlicia*; a figura da MCC mostra todas as pontas da árvore.',
 '- Táxons da entrada sem correspondência com a árvore e registros de outros gêneros constam em tabelas de auditoria separadas; não entram nos resumos de *Microlicia*.',
-'- Nove registros de *Microlicia* sem par de coordenadas numérico válido não entram nos resumos espaciais.',
+'- Oito registros de *Microlicia* sem par de coordenadas numérico válido não entram nos resumos espaciais.',
 '- Não há CRS documentado, áreas biogeográficas codificadas nem camadas ambientais neste piloto. A execução usa a MCC; a amostra posterior não foi processada nesta versão.',
-'- A reconstrução ER é exploratória; modelos alternativos e sensibilidade precisam ser avaliados antes de inferência final.',
+'- Algumas combinações conjuntas de estados são raras ou ausentes e algumas taxas estimadas se aproximam dos limites numéricos do ajuste; os testes de evolução correlacionada precisam de análise de sensibilidade antes de interpretação conclusiva.',
 '', '## Arquivos de saída','',
 '`run_metadata.json` registra hashes, versões e limites. O arquivo original da MCC e os arquivos de entrada não são sobrescritos.'
 ]
