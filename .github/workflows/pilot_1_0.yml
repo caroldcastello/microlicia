@@ -2,6 +2,15 @@ name: Microlicia pilot 1.1
 
 on:
   workflow_dispatch:
+  push:
+    branches: [pilot-1.0]
+    paths:
+      - '.github/workflows/pilot_1_0.yml'
+      - 'config/analysis.yml'
+      - 'data/input/**'
+      - 'data/metadata/**'
+      - 'requirements.txt'
+      - 'scripts/pilot_1_0.py'
   pull_request:
     branches: [main]
     paths:
