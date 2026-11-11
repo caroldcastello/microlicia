@@ -774,5 +774,5 @@ f"- Nos seis testes PGLS, nenhum p-valor permaneceu abaixo de 0,05 após ajuste 
 '', '## Arquivos de saída','',
 '`run_metadata.json` registra hashes, versões e limites. O arquivo original da MCC e os arquivos de entrada não são sobrescritos.'
 ]
-(OUT/'relatorio_piloto_1_2.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+(OUT/'relatorio_piloto_1_3.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
 print(json.dumps({'output_dir':str(OUT),'tips':len(tips),'root_age_tree_units':root_age,'root_to_tip_range':root_range,'occurrence_records':len(occ),'coordinates_valid':coord_complete,'coordinates_review':coord_bad,'occurrence_taxa':int(occ.taxon_raw.nunique()),'tree_matched_taxa':matched_unique,'unmatched_taxa':unmatched_unique,'matched_records':matched_record_count,'matched_valid_records':matched_valid_record_count,'trait_taxa':len(traits),'trait_exact_tree_matches':int(traits.taxon.isin(tipset).sum()),'trait_reconstructions':recon_summary},ensure_ascii=False,indent=2))
