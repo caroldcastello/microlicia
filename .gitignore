@@ -1,4 +1,4 @@
-# Keep generated analysis outputs and local R state out of commits.
+# Generated outputs and local R state
 results/*
 !results/README.md
 .Rhistory
@@ -7,9 +7,15 @@ results/*
 renv/library/
 renv/staging/
 
-# The input folder is tracked, but review public-data implications before adding files.
-# Large BEAST outputs should stay outside Git.
+# Large BEAST posterior files and logs stay outside Git
 *.trees
 *.trees.txt
 *.log
 *.log.txt
+
+# Keep only the inputs used by this pilot; do not add raw, unfiltered exports.
+data/input/*
+!data/input/README.md
+!data/input/teste_datacao_MCC.tree
+!data/input/ocorrencias.xlsx.csv
+!data/input/estames.csv
