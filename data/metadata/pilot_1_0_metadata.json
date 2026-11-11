@@ -1,0 +1,134 @@
+{
+  "pilot_version": "1.0",
+  "run_time_utc": "2026-11-11T14:11:15.924255+00:00",
+  "software": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scipy": "1.17.0",
+    "matplotlib": "3.10.8"
+  },
+  "inputs": {
+    "teste_datacao_MCC.tree": {
+      "sha256": "5fd1ed1f9e1bf4c08df91e0862c21201b78f313866b2f6bb141bf387fb69efdc",
+      "bytes": 169887
+    },
+    "ocorrencias.xlsx.csv": {
+      "sha256": "b6a767eb3f233d035d27ceff89a1c0eaef1a12dfdbb9fc13cb22aff390e2d516",
+      "bytes": 719368
+    },
+    "estames.csv": {
+      "sha256": "726aa66244f65f348331daa3a7ffc24d130d2a027bf0599bb6a8fc5ee764c224",
+      "bytes": 3176
+    },
+    "fonte_datação.json": {
+      "sha256": "64276c4c4048cb2105648eaaa6720aa125f06b3f600c6dd1c073ccef76b8d8b1",
+      "bytes": 843
+    },
+    "taxa_ocorrencias_excluidos_sem_correspondencia.csv": {
+      "sha256": "f126edb25ea94b5abf888c2bbce2203afe13c33f43396121410589cbf1b2b749",
+      "bytes": 813
+    }
+  },
+  "tree": {
+    "n_tips": 153,
+    "n_unique_tips": 153,
+    "root_age_tree_units": 28.048260814386865,
+    "root_age_interpreted_as_Ma_provisionally": 28.048260814386865,
+    "root_to_tip_range": 1.4210854715202004e-14,
+    "xml_declared_model_units": [
+      "years"
+    ],
+    "xml_normal_calibration_priors": [
+      {
+        "statistic": "tmrca(Marceteae_crown)",
+        "mean": 29.47,
+        "stdev": 2.94
+      },
+      {
+        "statistic": "tmrca(Rhexia_crown)",
+        "mean": 30.03,
+        "stdev": 4.17
+      },
+      {
+        "statistic": "tmrca(Lavoisiereae_crown)",
+        "mean": 22.39,
+        "stdev": 3.26
+      }
+    ],
+    "absolute_scale_interpretation": "Ma intended by matching calibration values to Reginato et al. 2022 Table 3 (Ma); XML label says years and must be reconciled before final inference"
+  },
+  "occurrence": {
+    "n_records": 10208,
+    "n_coordinate_pairs_valid": 10199,
+    "n_coordinate_pairs_needing_review": 9,
+    "n_unique_taxa_in_tree_filtered_input": 142,
+    "n_tree_matched_taxa_after_spacing_only_normalization": 142,
+    "n_unmatched_taxa_in_filtered_input": 0,
+    "n_taxa_excluded_before_analysis": 24,
+    "n_records_excluded_before_analysis": 117,
+    "n_matched_records": 10208,
+    "n_matched_records_with_valid_coordinates": 10199,
+    "exact_name_matches_before_spacing_rule_records": 170,
+    "duplicate_coordinate_pairs_global": 4489
+  },
+  "stamen": {
+    "n_rows_with_taxon": 153,
+    "n_taxa": 153,
+    "n_exact_matches_to_tree": 153,
+    "all_three_traits_nonmissing_for_all_named_taxa": true
+  },
+  "ancestral_reconstruction_model": "Equal-rates CTMC (ER), maximum likelihood; MCC tree only; uniform root prior",
+  "ancestral_reconstruction": [
+    {
+      "trait": "dimorfismo estaminal",
+      "states": [
+        0,
+        1,
+        2
+      ],
+      "q_per_tree_unit": 0.009918595701456362,
+      "log_likelihood": -51.16525634100997,
+      "root_probabilities": {
+        "dimórficos": 0.954815399671117,
+        "subisomórficos": 0.013111259276066631,
+        "isomórficos": 0.032073341052816416
+      }
+    },
+    {
+      "trait": "padrão de coloração dos estames",
+      "states": [
+        0,
+        1
+      ],
+      "q_per_tree_unit": 0.07614735985492863,
+      "log_likelihood": -82.61790811541105,
+      "root_probabilities": {
+        "concolores": 0.5442179883758712,
+        "bicolores": 0.4557820116241288
+      }
+    },
+    {
+      "trait": "esporângios das anteras",
+      "states": [
+        0,
+        1
+      ],
+      "q_per_tree_unit": 0.026253224044622676,
+      "log_likelihood": -48.736214280569826,
+      "root_probabilities": {
+        "tetrasporangiadas": 0.9182285141197555,
+        "poliesporangiadas": 0.08177148588024447
+      }
+    }
+  ],
+  "limitations": [
+    "Taxon matches after the spacing-only rule are reported in a crosswalk; 24 occurrence taxa remain unmatched and are not included in tree-linked summaries.",
+    "Coordinate records marked invalid or missing in the supplied standardized CSV are excluded from spatial summaries; raw names and coordinates remain in the inputs.",
+    "Geographic output is descriptive in decimal degrees without map projection, area calculation, environmental rasters, or region coding.",
+    "This run uses the MCC tree only; uncertainty across posterior trees is not propagated.",
+    "The intended scale is provisionally interpreted as Ma because the calibration values match Reginato et al. (2022), Table 3; the XML unit label says years and should be reconciled with the executed BEAST settings.",
+    "Exploratory summaries by stamen state are descriptive and do not establish adaptation or causation."
+  ]
+}
