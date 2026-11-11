@@ -1045,40 +1045,40 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 1045;S.A. Mori;13104;m_ baccharoides;-12.806317;-41.324359
 1046;T. Plowman;12811;m_ baccharoides;-13.666667;-39.116667
 1047;T.R. Santos;;m_ baccharoides;-13.006667;-41.563333
-1048;C.M. Sakuragui;;m_ belinelloi;-19.226761;-43.521994
-1049;C.M. Sakuragui;CFCR15252;m_ belinelloi;-18.011111;-44.328056
-1050;C.M. Sakuragui;CFCR15252;m_ belinelloi;-18.011111;-44.328056
-1051;C.M. Sakuragui;CFCR15252;m_ belinelloi;-18.011111;-44.328055
-1052;F. Almeda;9148;m_ belinelloi;-17.75749969;-44.17219925
-1053;F. Almeda;8532;m_ belinelloi;-17.696667;-44.256944
-1054;J. Paula-Souza;9505;m_ belinelloi;-18.937444;-43.685028
-1055;J. Paula-Souza;9505;m_ belinelloi;-17.7071;-44.1921
-1056;J. Paula-Souza;9505;m_ belinelloi;-17.707222;-44.192222
-1057;K.F. Rodrigues;2;m_ belinelloi;-13.3;-41.9
-1058;K.F. Rodrigues;3;m_ belinelloi;-13.266667;-41.9
-1059;K.F. Rodrigues;1;m_ belinelloi;-18.916667;-43.9
-1060;K.F. Rodrigues;38;m_ belinelloi;-17.726111;-44.1825
-1061;K.F. Rodrigues;2;m_ belinelloi;-17.674444;-44.158889
-1062;K.F. Rodrigues;59;m_ belinelloi;-17.730833;-44.171111
-1063;K.F. Rodrigues;1;m_ belinelloi;-17.707222;-44.191944
-1064;K.F. Rodrigues;51;m_ belinelloi;-17.698056;-44.268889
-1065;K.F. Rodrigues;3;m_ belinelloi;-17.693056;-44.158056
-1066;R. Pacifico;269;m_ belinelloi;-17.90855556;-44.22302778
-1067;R. Pacifico;269;m_ belinelloi;-17.908356;-44.223028
-1068;R. Pacifico;269;m_ belinelloi;-20.211944;-43.84
-1069;R. Pacifico;368;m_ belinelloi;-17.707028;-44.192167
-1070;R. Pacifico;269;m_ belinelloi;-17.908556;-44.223028
-1071;R. Romero;6104;m_ belinelloi;-19.2825;-43.578056
-1072;R. Romero;6104;m_ belinelloi;-17.7075;-44.191944
-1073;R. Romero;8879;m_ belinelloi;-17.415833;-44.162222
-1074;R. Romero;8843;m_ belinelloi;-17.423056;-44.113333
-1075;V.C. Souza;22025;m_ belinelloi;-17.75749969;-44.17219925
-1076;V.C. Souza;25478;m_ belinelloi;-16.583333;-42.95
-1077;V.C. Souza;22025;m_ belinelloi;-17.70808333;-44.19172222
-1078;V.C. Souza;22025;m_ belinelloi;-17.708083;-44.020283
-1079;V.C. Souza;25478;m_ belinelloi;-17.7;-44.183333
-1080;V.C. Souza;25478;m_ belinelloi;-17.708889;-44.191111
-1081;V.C. Souza;25478;m_ belinelloi;-17.709167;-44.191389
+1048;C.M. Sakuragui;;m_belinelloi;-19.226761;-43.521994
+1049;C.M. Sakuragui;CFCR15252;m_belinelloi;-18.011111;-44.328056
+1050;C.M. Sakuragui;CFCR15252;m_belinelloi;-18.011111;-44.328056
+1051;C.M. Sakuragui;CFCR15252;m_belinelloi;-18.011111;-44.328055
+1052;F. Almeda;9148;m_belinelloi;-17.75749969;-44.17219925
+1053;F. Almeda;8532;m_belinelloi;-17.696667;-44.256944
+1054;J. Paula-Souza;9505;m_belinelloi;-18.937444;-43.685028
+1055;J. Paula-Souza;9505;m_belinelloi;-17.7071;-44.1921
+1056;J. Paula-Souza;9505;m_belinelloi;-17.707222;-44.192222
+1057;K.F. Rodrigues;2;m_belinelloi;-13.3;-41.9
+1058;K.F. Rodrigues;3;m_belinelloi;-13.266667;-41.9
+1059;K.F. Rodrigues;1;m_belinelloi;-18.916667;-43.9
+1060;K.F. Rodrigues;38;m_belinelloi;-17.726111;-44.1825
+1061;K.F. Rodrigues;2;m_belinelloi;-17.674444;-44.158889
+1062;K.F. Rodrigues;59;m_belinelloi;-17.730833;-44.171111
+1063;K.F. Rodrigues;1;m_belinelloi;-17.707222;-44.191944
+1064;K.F. Rodrigues;51;m_belinelloi;-17.698056;-44.268889
+1065;K.F. Rodrigues;3;m_belinelloi;-17.693056;-44.158056
+1066;R. Pacifico;269;m_belinelloi;-17.90855556;-44.22302778
+1067;R. Pacifico;269;m_belinelloi;-17.908356;-44.223028
+1068;R. Pacifico;269;m_belinelloi;-20.211944;-43.84
+1069;R. Pacifico;368;m_belinelloi;-17.707028;-44.192167
+1070;R. Pacifico;269;m_belinelloi;-17.908556;-44.223028
+1071;R. Romero;6104;m_belinelloi;-19.2825;-43.578056
+1072;R. Romero;6104;m_belinelloi;-17.7075;-44.191944
+1073;R. Romero;8879;m_belinelloi;-17.415833;-44.162222
+1074;R. Romero;8843;m_belinelloi;-17.423056;-44.113333
+1075;V.C. Souza;22025;m_belinelloi;-17.75749969;-44.17219925
+1076;V.C. Souza;25478;m_belinelloi;-16.583333;-42.95
+1077;V.C. Souza;22025;m_belinelloi;-17.70808333;-44.19172222
+1078;V.C. Souza;22025;m_belinelloi;-17.708083;-44.020283
+1079;V.C. Souza;25478;m_belinelloi;-17.7;-44.183333
+1080;V.C. Souza;25478;m_belinelloi;-17.708889;-44.191111
+1081;V.C. Souza;25478;m_belinelloi;-17.709167;-44.191389
 1082;C.T. Oliveira;84;m_ calycina;-20.135833;-43.513889
 1083;C.T. Oliveira;480;m_ calycina;-20.108056;-43.449722
 1084;C.T. Oliveira;47;m_ calycina;-20.093889;-43.526667
@@ -3385,8 +3385,8 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 3385;R. Romero;8690;m_ deflexa;-8.985277778;-48.29833333
 3386;R. Romero;8693;m_ deflexa;-8.985277778;-48.29833333
 3387;R. Romero;8695;m_ deflexa;-8.985277778;-48.29833333
-3388;R. Romero;8787;m_ diamantinesis;-18.27444444;-43.68444444
-3389;R. Romero;8975;m_ diamantinesis;-18.27452778;-43.68436111
+3388;R. Romero;8787;m_diamantinesis;-18.27444444;-43.68444444
+3389;R. Romero;8975;m_diamantinesis;-18.27452778;-43.68436111
 3390;A.B. Martins;9146;m_ donii;-17.7075;-44.19225
 3391;A.F.A. Versiane;376;m_ donii;-14.226389;-47.9025
 3392;A.F.A. Versiane;376;m_ donii;-18.215278;-43.588056
@@ -5749,9 +5749,9 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 5749;R.F. Alves;8;m_ longirostrata;-13.606667;-47.645833
 5750;R.J.V. Alves;8927;m_ longirostrata;-13.53310013;-48.22000122
 5751;F.H. Muniz;4024;m_ longirostrata;-6.931528;-47.381222
-5752;H.S. Irwin;12946;m_ macranta;-16.330278;-48.213611
-5753;M. Hopkins;5179;m_ macranta;-15.733333;-47.73
-5754;M. Hopkins;9952;m_ macranta;-15.6;-48.05
+5752;H.S. Irwin;12946;m_ macrantha;-16.330278;-48.213611
+5753;M. Hopkins;5179;m_ macrantha;-15.733333;-47.73
+5754;M. Hopkins;9952;m_ macrantha;-15.6;-48.05
 5755;A.C.A. Soares;252;m_ macrantha;-15.8875;-47.848611
 5756;A.E. Ramos;1756;m_ macrantha;-15.928611;-48.087222
 5757;A.F.A. Versiane;217;m_ macrantha;-15.783333;-48.866667
@@ -6424,7 +6424,7 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 6424;R. Romero;6067;m_ naudiniana;-18.293889;-43.683889
 6425;V.C. Souza;21008;m_ naudiniana;-18.579444;-43.874722
 6426;V.C. Souza;21008;m_ naudiniana;-18.579722;-43.875
-6427;T.B. Cavalcanti;CFCR9500;m_ naudiniana?;-18.233333;-43.6
+6427;T.B. Cavalcanti;CFCR9500;m_ naudiniana;-18.233333;-43.6
 6428;**;;m_ neopyrenaica;-16.079022;-50.237467
 6429;A.F.A. Versiane;585;m_ neopyrenaica;-15.768333;-48.829444
 6430;A.F.A. Versiane;152;m_ neopyrenaica;-15.786778;-48.771222
@@ -6519,7 +6519,7 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 6519;R. Pacifico;662;m_ noblickii;-12.599167;-41.491111
 6520;S.A. Mori;12913;m_ noblickii;-12.454687;-41.472803
 6521;S.A. Mori;14368;m_ noblickii;-12.456378;-41.481222
-6522;A.K.A. Santos;445;m_ noblickii?;-13.03;-41.37
+6522;A.K.A. Santos;445;m_ noblickii;-13.03;-41.37
 6523;A.P. Duarte;7858;m_ obtusifolia;-18.24939919;-43.60029984
 6524;F. Almeda;8478;m_ obtusifolia;-18.18278122;-43.61888123
 6525;F. Almeda;8478;m_ obtusifolia;-18.18278122;-43.61888123
@@ -8467,7 +8467,6 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 8467;R. Pacifico;543;m_ riedeliana;-19.105833;-43.673333
 8468;R. Romero;8647;m_ riedeliana;-17.003889;-43.538056
 8469;R. Romero;8647;m_ riedeliana;-19.069722;-43.706667
-8470;E. Pereira;1373;m_ riedeliana/glandulifera?;-18.24939919;-43.60029984
 8471;M. Castro;285;m_ rosanae;;
 8472;A.F.A. Versiane;677;m_ rosmarinoides;-19.431867;-43.869522
 8473;A.F.A. Versiane;677;m_ rosmarinoides;-20.095278;-43.680833
@@ -10282,11 +10281,11 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 10282;T.S. Filgueiras;3286;m_ viminalis;-13.948056;-47.491111
 10283;T.S. Nunes;93;m_ viminalis;-13.328611;-41.851111
 10284;V.C. Souza;24746;m_ viminalis;-13.899722;-47.396667
-10285;W. Ganev;;m_ viminalis;-18.266806;-43.700222
-10286;W. Ganev;;m_ viminalis;-12.983333;-41.35
-10287;W. Ganev;;m_ viminalis;-12.95;-41.333333
-10288;W. Ganev;;m_ viminalis;-12.95;-41.333333
-10289;W. Ganev;;m_ viminalis;-12.975;-41.342222
+10285;W. Ganev;s.n.;m_ viminalis;-18.266806;-43.700222
+10286;W. Ganev;s.n.;m_ viminalis;-12.983333;-41.35
+10287;W. Ganev;s.n.;m_ viminalis;-12.95;-41.333333
+10288;W. Ganev;s.n.;m_ viminalis;-12.95;-41.333333
+10289;W. Ganev;s.n.;m_ viminalis;-12.975;-41.342222
 10290;W. Ganev;1106;m_ viminalis;-13.3;-41.87
 10291;W. Ganev;1033;m_ viminalis;-13.08;-41.88
 10292;W. Ganev;1033;m_ viminalis;-13.083333;-41.883333
@@ -10315,7 +10314,7 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 10315;M.B. Horta;370;m_ warmingiana;-20.52079964;-43.69189835
 10316;M.M. Arbo;4049;m_ warmingiana;-13.25;-41.9
 10317;M.M. Arbo;4049;m_ warmingiana;-20.083333;-43.45
-10318;M.S. Mendes;;m_ warmingiana;-19.349167;-43.616806
+10318;M.S. Mendes;s.n.;m_ warmingiana;-19.349167;-43.616806
 10319;M.S. Mendes;s.n.;m_ warmingiana;-20.135833;-43.841111
 10320;R. Pacifico;298;m_ warmingiana;-20.0746994;-43.40750122
 10321;R. Romero;5313;m_ warmingiana;-19.95940018;-43.41529846
@@ -10324,3 +10323,79 @@ Linha_fonte;recordedBy;collector_number;Taxon_original;Latitude_decimal;Longitud
 10324;T.M.S. Grandi;s.n.;m_ warmingiana;-18.24939919;-43.60029984
 10325;A.A. Murakami;175;m_ sphagnicola;-14.497222;-68.249167
 10326;R. Romero;8919;m_spnov;-18.723056;-46.87
+10327;A. Furlan;CFSC8332;Microlicia macrocarpa;-24.275556;-49.285833
+10328;A. Furlan;CFSC8332;Microlicia macrocarpa;-21.966667;-47.916667
+10329;A. Furlan;CFSC8352;Microlicia macrocarpa;-18.85;-43.75
+10330;A. Furlan;CFSC8352;Microlicia macrocarpa;-18.85;-43.75
+10331;A. Furlan;CFSC8332;Microlicia macrocarpa;-18.766667;-43.733333
+10332;A.H. Salles;3237;Microlicia macrocarpa;-19.124167;-44.353611
+10333;A.H. Salles;1840;Microlicia macrocarpa;-17.1875;-46.8125
+10334;A.H. Salles;3237;Microlicia macrocarpa;-19.345444;-43.631611
+10335;A.H. Salles;3237;Microlicia macrocarpa;-19.124167;-44.353611
+10336;F. Almeda;8579;Microlicia macrocarpa;-19.233333;-43.583333
+10337;F. Almeda;9173;Microlicia macrocarpa;-18.385647;-44.151389
+10338;F. Almeda;8545;Microlicia macrocarpa;-19.28666306;-43.58860779
+10339;F. Almeda;8597;Microlicia macrocarpa;-19.0447197;-43.71055603
+10340;F. Almeda;8579;Microlicia macrocarpa;-19.24832916;-43.50999832
+10341;F. Almeda;9173;Microlicia macrocarpa;-19.25966644;-43.5530014
+10342;F. Almeda;8900;Microlicia macrocarpa;-19.25338936;-43.54085922
+10343;F. Almeda;8579;Microlicia macrocarpa;-19.24833;-43.51
+10344;F. Almeda;8900;Microlicia macrocarpa;-19.2533333;-43.5408333
+10345;F. Almeda;9173;Microlicia macrocarpa;-19.2597222;-43.5530556
+10346;F. Almeda;8597;Microlicia macrocarpa;-19.402778;-43.710556
+10347;F. Almeda;9173;Microlicia macrocarpa;-19.259667;-43.553
+10348;F. Almeda;8597;Microlicia macrocarpa;-19.044722;-43.710556
+10349;F. Almeda;8579;Microlicia macrocarpa;-19.248333;-43.51
+10350;G. Eiten;6885;Microlicia macrocarpa;-15.946389;-47.877778
+10351;G. Eiten;6885;Microlicia macrocarpa;-19.305278;-43.583333
+10352;G. Eiten;6832;Microlicia macrocarpa;-19.3;-43.583333
+10353;G. Eiten;6832;Microlicia macrocarpa;-19.5135994;-43.74499893
+10354;J. Cordeiro;5604;Microlicia macrocarpa;-19.101389;-43.674167
+10355;J. Semir;8663;Microlicia macrocarpa;-19.5136;-43.745
+10356;J.A. Lombardi;3199;Microlicia macrocarpa;-19.258056;-43.551111
+10357;J.A. Lombardi;3199;Microlicia macrocarpa;-19.152778;-43.04
+10358;J.R. Pirani;5165;Microlicia macrocarpa;-18.840556;-43.748056
+10359;J.R. Stehmann;;Microlicia macrocarpa;-19.336667;-43.629722
+10360;J.R. Stehmann;;Microlicia macrocarpa;-19.336667;-43.629722
+10361;K. Yamamoto;52;Microlicia macrocarpa;-19.16889954;-43.71440125
+10362;L. Echternacht;2667;Microlicia macrocarpa;-19.493417;-43.535306
+10363;L.F.G. Labouriau;s.n.;Microlicia macrocarpa;-19.343444;-43.632722
+10364;L.H.S. Cunha;1219;Microlicia macrocarpa;-19.208333;-43.340278
+10365;L.S. Kinoshita;67;Microlicia macrocarpa;-19.116667;-46.666667
+10366;M. Brandão;12538;Microlicia macrocarpa;-18.238056;-43.611111
+10367;M. Verdi;6434;Microlicia macrocarpa;-19.278333;-43.590555
+10368;M. Verdi;6608;Microlicia macrocarpa;-19.247222;-43.510278
+10369;M. Verdi;6608;Microlicia macrocarpa;-19.145;-43.303611
+10370;M.A. Pena;500;Microlicia macrocarpa;-19.247222;-43.511667
+10371;M.A. Pena;511;Microlicia macrocarpa;-19.261389;-43.550556
+10372;M.A. Pena;500;Microlicia macrocarpa;-19.145;-43.304167
+10373;M.A. Pena;511;Microlicia macrocarpa;-19.154167;-43.330278
+10374;R. Pacifico;193;Microlicia macrocarpa;-19.247361;-43.513139
+10375;R. Romero;5413;Microlicia macrocarpa;-18.283333;-43.616667
+10376;A. Furlan;CFCR2278;Microlicia serrulata;-13.129167;-41.776111
+10377;A. Furlan;CFCR2278;Microlicia serrulata;-18.233333;-43.6
+10378;A.P. Duarte;7904;Microlicia serrulata;-18.2494;-43.6003
+10379;A.P. Duarte;7904;Microlicia serrulata;-18.249444;-43.600278
+10380;E. Pereira;1551;Microlicia serrulata;-18.24939919;-43.60029984
+10381;G. Eiten;6946;Microlicia serrulata;-20.366667;-43.483333
+10382;J. Lovo;s.n.;Microlicia serrulata;-21.333333;-44.216667
+10383;J. Lovo;34;Microlicia serrulata;-18.859444;-43.7575
+10384;L. Maielo;s.n.;Microlicia serrulata;-20.3741667;-43.5388889
+10385;L. Maielo;s.n.;Microlicia serrulata;-20.374167;-43.538889
+10386;M.G.C. Fernandes;1708;Microlicia serrulata;-19.042778;-43.710833
+10387;R. Mello-Silva;3674;Microlicia serrulata;-18.213583;-43.704333
+10388;R. Mello-Silva;3674;Microlicia serrulata;-18.213333;-43.704167
+10389;R. Mello-Silva;3674;Microlicia serrulata;-18.213611;-43.704444
+10390;R. Pacifico;316;Microlicia serrulata;-18.24075;-43.685806
+10391;R. Pacifico;215;Microlicia serrulata;-18.850361;-43.748167
+10392;R. Pacifico;215;Microlicia serrulata;-18.853611;-43.748167
+10393;R. Pacifico;316;Microlicia serrulata;-18.24075;-43.708056
+10394;R. Romero;47;Microlicia serrulata;-20.141667;-46.764722
+10395;R. Romero;5369;Microlicia serrulata;-20.141667;-46.764722
+10396;R. Romero;8634;Microlicia serrulata;-20.248611;-43.489444
+10397;R. Romero;8634;Microlicia serrulata;-19.226389;-43.483056
+10398;R. Romero;5369;Microlicia serrulata;-19.166667;-43.5
+10399;R. Romero;6091;Microlicia serrulata;-18.303056;-43.8575
+10400;R. Romero;8468;Microlicia serrulata;-18.186667;-43.621111
+10401;R. Romero;9119;Microlicia serrulata;-18.292222;-43.754444
+10402;R. Romero;6065/a;Microlicia serrulata;-18.199722;-43.623333
