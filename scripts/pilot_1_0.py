@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pilot 1.0: MCC tree, stamen morphology, and occurrence summaries.
+"""Pilot 1.2: MCC tree, stamen morphology, and occurrence summaries.
 
 Run from this directory or elsewhere:
   PILOT_INPUT_DIR=/path/to/input python3 pilot_1_0.py
