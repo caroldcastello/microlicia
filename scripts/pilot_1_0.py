@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pilot 1.3: MCC tree, stamen morphology, and occurrence summaries.
+"""Pilot 1.4: MCC tree, stamen morphology, and occurrence summaries.
 
 Run from this directory or elsewhere:
   PILOT_INPUT_DIR=/path/to/input python3 pilot_1_0.py
@@ -502,6 +502,30 @@ def micro_nodes_walk(n):micro_nodes.append(n);[micro_nodes_walk(c) for c in n.ch
 micro_nodes_walk(root)
 micro_tips=[n for n in micro_nodes if not n.children]
 micro_tipset={n.name for n in micro_tips}
+
+# Descriptive lineage-through-time curve for the sampled Microlicia MCC clade.
+# This does not estimate diversification rates or correct incomplete sampling.
+root_crown_age=float(root.age)
+ltt_events=[(0.0,len(root.children),'Microlicia crown')]
+for node in micro_nodes:
+    if node.children and node is not root:
+        elapsed=root_crown_age-float(node.age)
+        if elapsed>=0:ltt_events.append((elapsed,len(node.children)-1,'internal split'))
+ltt_events.sort(key=lambda x:x[0])
+ltt_rows=[]; n_lineages=0
+for i,(elapsed,delta,event_type) in enumerate(ltt_events):
+    n_lineages+=delta
+    ltt_rows.append({'time_since_Microlicia_crown_tree_units':elapsed,'lineage_count_after_event':n_lineages,'lineage_change':delta,'event_type':event_type})
+ltt_rows.append({'time_since_Microlicia_crown_tree_units':root_crown_age,'lineage_count_after_event':len(micro_tips),'lineage_change':0,'event_type':'present'})
+ltt_df=pd.DataFrame(ltt_rows)
+write_csv(ltt_df,OUT/'microlicia_LTT.csv')
+fig,ax=plt.subplots(figsize=(8,5))
+ax.step(ltt_df.time_since_Microlicia_crown_tree_units,ltt_df.lineage_count_after_event,where='post',color='#2d7250',lw=2)
+ax.set_xlabel('Tempo desde a coroa de Microlicia (unidades da árvore)')
+ax.set_ylabel('Número de linhagens')
+ax.set_title(f'Curva linhagens-ao-longo-do-tempo — MCC de Microlicia ({len(micro_tips)} pontas amostradas)')
+ax.grid(alpha=.2);fig.tight_layout();fig.savefig(OUT/'microlicia_LTT.png',dpi=200);plt.close(fig)
+
 plot_dated_tree(root_full,OUT/'dated_tree_all_taxa.png',OUT/'dated_tree_all_taxa.pdf')
 occ_input=read_occurrences(OCC_PATH)
 occ_input['taxon_match_exact']=occ_input.taxon_normalized
@@ -723,7 +747,7 @@ for col,meta in trait_meta.items():
     recon=recon_results[col]; states=recon['states']
     recon_summary.append({'trait':meta['name'],'states':states,'selected_model':recon['selected_model'],'rate_matrix_per_tree_unit':recon['q_per_tree_unit'],'log_likelihood':recon['log_likelihood'],'selected_model_root_probabilities':{trait_labels[col].get(s,str(s)):float(recon['root_probs'][i]) for i,s in enumerate(states)},'AICc_model_averaged_root_probabilities':{trait_labels[col].get(s,str(s)):float(model_averaged_roots[col][i]) for i,s in enumerate(states)}})
 metadata={
-    'pilot_version':'1.3',
+    'pilot_version':'1.4',
     'run_time_utc':datetime.now(timezone.utc).isoformat(),
     'software':{'python':sys.version.split()[0],'platform':platform.platform(),'numpy':np.__version__,'pandas':pd.__version__,'scipy':__import__('scipy').__version__,'matplotlib':matplotlib.__version__},
     'inputs':{p.name:{'sha256':sha256(p),'bytes':p.stat().st_size} for p in (TREE_PATH,OCC_PATH,TRAIT_PATH,*( [XML_PATH] if XML_PATH.exists() else [DATING_REF] ),*( [FILTER_AUDIT] if FILTER_AUDIT.exists() else [] ))},
@@ -731,15 +755,15 @@ metadata={
     'tree':{'n_tips_all_taxa':len(tips),'n_unique_tips_all_taxa':len(tipset),'n_microlicia_tips':len(microlicia_tipset),'n_non_microlicia_tips':len(tipset)-len(microlicia_tipset),'root_age_tree_units':root_age,'microlicia_crown_age_tree_units':root.age,'root_to_tip_range':root_range,'xml_declared_model_units':dating_units,'calibration_priors':calibrations,'absolute_scale_interpretation':'Ma intended by matching calibration values to Reginato et al. 2022 Table 3 (Ma); XML label says years and must be reconciled before final inference','tree_tip_labels_used_as_analysis_reference':True,'tree_tip_labels_modified':False},
     'occurrence':{'n_records_input':len(occ_input),'n_records_microlicia_analyses':len(occ),'n_records_non_microlicia_tree_tips_excluded':int((occ_input.taxon_matched_full_tree & ~occ_input.taxon_matched_microlicia).sum()),'n_records_unmatched_to_full_tree':int((~occ_input.taxon_matched_full_tree).sum()),'n_coordinate_pairs_valid_in_microlicia':coord_complete,'n_coordinate_pairs_needing_review_in_microlicia':coord_bad,'n_unique_taxa_in_input':int(occ_input.taxon_raw.nunique()),'n_microlicia_taxa_matched':matched_unique,'n_unmatched_taxa_to_full_tree':unmatched_unique,'n_microlicia_tips_without_occurrences':len(tree_taxa_without_occ),'n_matched_records':matched_record_count,'n_matched_records_with_valid_coordinates':matched_valid_record_count,'duplicate_coordinate_pairs_global_within_microlicia':int(coord_complete-valid[['latitude','longitude']].drop_duplicates().shape[0]),'occurrence_to_tree_candidate_aliases':OCCURRENCE_TO_TREE_TIP_ALIASES,'alias_mapping_is_taxonomic_synonymy_claim':False,'name_audit_output':'name_reconciliation_occurrences.csv'},
     'stamen':{'n_rows_input_with_taxon':len(traits_all),'n_microlicia_rows':len(traits),'n_microlicia_taxa':int(traits.taxon.nunique()),'n_exact_matches_to_microlicia_tree':int(traits.taxon.isin(micro_tipset).sum()),'all_three_traits_nonmissing_for_microlicia_rows':bool(traits[list(trait_meta)].notna().all(axis=None))},
-    'analyses':{'stamen_evolution_models':'ER, SYM and ARD fit by maximum likelihood; AICc comparisons; ER and SYM are equivalent for binary traits','ancestral_reconstruction':'Maximum-likelihood reconstruction on the MCC; posterior state probabilities summarized for the AICc-selected model and AICc-weighted ER/ARD models; uniform root prior','correlated_evolution':'Pagel-style independent vs dependent four-state CTMC comparisons; LRT df=4 and AIC; sparse joint states and boundary estimates are flagged','trait_geography':'Exploratory Brownian PGLS of species median latitude/longitude against categorical stamen traits; BH adjustment across six tests; occurrence sampling not corrected'},
+    'analyses':{'stamen_evolution_models':'ER, SYM and ARD fit by maximum likelihood; AICc comparisons; ER and SYM are equivalent for binary traits','ancestral_reconstruction':'Maximum-likelihood reconstruction on the MCC; posterior state probabilities summarized for the AICc-selected model and AICc-weighted ER/ARD models; uniform root prior','correlated_evolution':'Pagel-style independent vs dependent four-state CTMC comparisons; LRT df=4 and AIC; sparse joint states and boundary estimates are flagged','trait_geography':'Exploratory Brownian PGLS of species median latitude/longitude against categorical stamen traits; BH adjustment across six tests; occurrence sampling not corrected','diversification':'Descriptive lineage-through-time curve on the 145 sampled Microlicia tips in the MCC; no diversification rates or shifts inferred'},
     'ancestral_reconstruction':recon_summary,
-    'figures':{'dated_tree_all_taxa_png':'dated_tree_all_taxa.png','dated_tree_all_taxa_pdf':'dated_tree_all_taxa.pdf','tip_count':len(tips),'labels':'Full genus and species names; Microlicia highlighted separately'},
-    'limitations':['Only species belonging to Microlicia are included in occurrence and stamen comparative analyses; other MCC tips remain in the full dated-tree figure.','Unmatched input taxa and occurrences for non-Microlicia tips are listed in audit tables and excluded from Microlicia analyses.','Coordinate records marked invalid or missing are excluded from geographic summaries; raw rows remain in the inputs.','Geographic PGLS uses observed-record median coordinates without spatial bias correction; results are exploratory and do not estimate full species ranges.','Several joint stamen-state combinations are absent or rare, and some correlated-evolution rate estimates approach optimization bounds; those tests need cautious interpretation and sensitivity analysis.','This run uses the MCC tree only; uncertainty across posterior trees is not propagated.','The XML time-unit label remains to be reconciled with the calibration scale before interpreting rates in absolute time.','Associations do not establish adaptation or causation.']
+    'figures':{'dated_tree_all_taxa_png':'dated_tree_all_taxa.png','dated_tree_all_taxa_pdf':'dated_tree_all_taxa.pdf','microlicia_LTT_png':'microlicia_LTT.png','tip_count':len(tips),'labels':'Full genus and species names; Microlicia highlighted separately'},
+    'limitations':['Only species belonging to Microlicia are included in occurrence and stamen comparative analyses; other MCC tips remain in the full dated-tree figure.','Unmatched input taxa and occurrences for non-Microlicia tips are listed in audit tables and excluded from Microlicia analyses.','Coordinate records marked invalid or missing are excluded from geographic summaries; raw rows remain in the inputs.','Geographic PGLS uses observed-record median coordinates without spatial bias correction; results are exploratory and do not estimate full species ranges.','Several joint stamen-state combinations are absent or rare, and some correlated-evolution rate estimates approach optimization bounds; those tests need cautious interpretation and sensitivity analysis.','The LTT curve describes only the 145 sampled Microlicia lineages in the MCC; no diversification-rate or shift inference is made because the complete species richness and sampling fraction are not established.','Ancestral-area reconstruction (DEC) has not been run: area definitions and range coding must be specified and audited first.','This run uses the MCC tree only; uncertainty across posterior trees is not propagated.','The XML time-unit label remains to be reconciled with the calibration scale before interpreting rates in absolute time.','Associations do not establish adaptation or causation.']
 }
 (OUT/'run_metadata.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
 
 lines=[
-'# Microlicia — Piloto de análises 1.3','',
+'# Microlicia — Piloto de análises 1.4','',
 '## Dados e execução','',
 'As análises de ocorrências, estames e reconstrução ancestral incluem somente espécies de *Microlicia*. Uma figura separada apresenta a MCC completa, com os 153 táxons rotulados. Os nomes da árvore MCC definem a referência. Os rótulos originais de ocorrência e estames são preservados em tabelas de auditoria; os oito mapeamentos de grafia candidatos às pontas da MCC são usados apenas para cruzamento, sem afirmar sinonímia taxonômica e sem sobrescrever entradas.','',
 '## Resultados de validação','',
@@ -759,12 +783,16 @@ f"- Os testes de evolução correlacionada tiveram p brutos entre {pair_df.p_val
 '## Ocorrências e associação descritiva','',
 '`occurrence_species_summary_tree_matched.csv` resume registros e coordenadas observadas por espécie. `stamen_trait_geography_PGLS.csv` traz testes filogenéticos exploratórios de associação entre os estados de estames e a latitude/longitude mediana por espécie, com ajuste BH. `exploratory_trait_geography_descriptives.csv` apresenta estatísticas descritivas por estado. Coordenadas observadas não equivalem à distribuição geográfica completa; não foram corrigidos viés de coleta nem esforço amostral.','',
 f"- Nos seis testes PGLS, nenhum p-valor permaneceu abaixo de 0,05 após ajuste BH (menor p ajustado = {pgls_df.p_value_BH.min():.3f}); isso não demonstra ausência de relação, mas não houve associação detectada neste piloto.",
+'', '## Diversificação e biogeografia','',
+f"`microlicia_LTT.png` e `microlicia_LTT.csv` mostram a curva linhagens-ao-longo-do-tempo da subárvore MCC de *Microlicia*: {len(micro_tips)} pontas amostradas e idade de coroa de {root_crown_age:.3f} unidades numéricas. É uma descrição do padrão na amostra, não uma estimativa de taxa de diversificação. Modelos de diversificação e detecção de shifts ficam pendentes até documentar a riqueza total de espécies reconhecidas e a fração amostrada.",
+'A reconstrução biogeográfica DEC ainda não foi executada. As ocorrências permitem gerar uma matriz espécie-área, mas é necessário definir e justificar as áreas (por exemplo, biomas/domínios fitogeográficos) e conferir pontos que caiam em polígonos de transição ou fora do domínio de estudo. O piloto atual apresenta resumos de coordenadas e PGLS, não reconstrói áreas ancestrais.','',
 '## Figuras','',
 '- `dated_tree_all_taxa.png` e `dated_tree_all_taxa.pdf`: árvore datada MCC completa, com as 153 espécies identificadas por binômios; *Microlicia* aparece destacada em verde. O eixo usa as unidades numéricas da MCC enquanto a escala das calibrações é reconciliada.',
+'- `microlicia_LTT.png`: curva descritiva linhagens-ao-longo-do-tempo para as 145 pontas de *Microlicia* na MCC.',
 '- `occurrence_coordinates_scatter.png`: pontos de *Microlicia* em longitude/latitude decimal, sem projeção ou limites políticos.',
 '- `stamen_trait_state_counts.png`: frequências dos estados dos três caracteres de *Microlicia*.',
 '- `exploratory_trait_latitude.png`: distribuição descritiva da latitude média por estado nos dois primeiros caracteres de *Microlicia*.',
-'', '## Conferência de nomes e limites do Piloto 1.3','',
+'', '## Conferência de nomes e limites do Piloto 1.4','',
 '- `name_reconciliation_occurrences.csv` registra rótulo original, normalização de formato, rótulo da MCC usado no cruzamento, regra aplicada e inclusão/exclusão. `name_reconciliation_stamen_traits.csv` faz a conferência da matriz de estames. Nomes sem correspondência permanecem na auditoria e não entram nas análises ancoradas na árvore.',
 '- As análises comparativas excluem pontas de gêneros diferentes de *Microlicia*; a figura da MCC mostra todas as pontas da árvore.',
 '- Táxons da entrada sem correspondência com a árvore e registros de outros gêneros constam em tabelas de auditoria separadas; não entram nos resumos de *Microlicia*.',
@@ -774,5 +802,5 @@ f"- Nos seis testes PGLS, nenhum p-valor permaneceu abaixo de 0,05 após ajuste 
 '', '## Arquivos de saída','',
 '`run_metadata.json` registra hashes, versões e limites. O arquivo original da MCC e os arquivos de entrada não são sobrescritos.'
 ]
-(OUT/'relatorio_piloto_1_3.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+(OUT/'relatorio_piloto_1_4.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
 print(json.dumps({'output_dir':str(OUT),'tips':len(tips),'root_age_tree_units':root_age,'root_to_tip_range':root_range,'occurrence_records':len(occ),'coordinates_valid':coord_complete,'coordinates_review':coord_bad,'occurrence_taxa':int(occ.taxon_raw.nunique()),'tree_matched_taxa':matched_unique,'unmatched_taxa':unmatched_unique,'matched_records':matched_record_count,'matched_valid_records':matched_valid_record_count,'trait_taxa':len(traits),'trait_exact_tree_matches':int(traits.taxon.isin(tipset).sum()),'trait_reconstructions':recon_summary},ensure_ascii=False,indent=2))
