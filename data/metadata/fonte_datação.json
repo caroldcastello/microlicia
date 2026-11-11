@@ -1,0 +1,25 @@
+{
+  "source": "Reginato, M. et al. 2022. Historical Biogeography of the Melastomataceae. In: Systematics, Evolution, and Ecology of Melastomataceae. Table 3, p. 94.",
+  "table_age_unit": "Ma",
+  "xml_declared_units_observed": [
+    "years"
+  ],
+  "calibration_priors": [
+    {
+      "statistic": "tmrca(Marceteae_crown)",
+      "mean": 29.47,
+      "stdev": 2.94
+    },
+    {
+      "statistic": "tmrca(Rhexia_crown)",
+      "mean": 30.03,
+      "stdev": 4.17
+    },
+    {
+      "statistic": "tmrca(Lavoisiereae_crown)",
+      "mean": 22.39,
+      "stdev": 3.26
+    }
+  ],
+  "interpretation": "Intended scale inferred as Ma because all three XML prior means match crown ages in the cited table, whose column is explicitly Ma. Resolve the XML 'years' label against the exact BEAST run configuration before treating calendar ages as verified."
+}
