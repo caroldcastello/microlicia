@@ -1,22 +1,31 @@
-# Paths are relative to the repository root.
+# Paths relative to repository root. The main Python script uses these same paths.
 files:
   mcc_tree: data/input/teste_datacao_MCC.tree
-  occurrences: data/input/ocorrencias.csv
+  occurrences: data/input/ocorrencias.xlsx.csv
   stamen_traits: data/input/estames.csv
+  dating_reference: data/metadata/fonte_datação.json
+  occurrence_filter_audit: data/metadata/taxa_ocorrencias_excluidos_sem_correspondencia.csv
 
-# Replace with exact column names in the CSV files.
-columns:
-  taxon: species
-  longitude: longitude
-  latitude: latitude
+occurrence_format:
+  delimiter: ";"
+  encoding: "UTF-8"
+  original_taxon_column: "Taxon_original"
+  tree_taxon_column: "taxon_tree"
+  longitude_column: "Longitude_decimal"
+  latitude_column: "Latitude_decimal"
+  name_rule: "Remove whitespace only between m_ and the epithet; no synonymization or spelling correction"
 
-# Add exact trait column names after reviewing estames.csv.
-traits:
-  quantitative: []
-  categorical: []
+stamen_traits:
+  delimiter: ";"
+  encoding: "UTF-8"
+  taxon_column: ""
+  categorical_columns:
+    - "(0) dimorphic (1) subisomorphic (2) isomorphic"
+    - "(0) concolours (1) bicolours"
+    - "(0) tetrasporangiate (1) polysporangiate"
 
-# Set only after confirming the source metadata.
-occurrence_crs: null
-
-# Geographic areas are defined only after choosing a question and coding scheme.
-areas: []
+dating:
+  intended_scale: "Ma (inference from the source calibration table)"
+  xml_label_observed: "years"
+  source: "Reginato et al. 2022, Table 3, p. 94"
+  status: "Reconcile against the exact BEAST run configuration before final interpretation"

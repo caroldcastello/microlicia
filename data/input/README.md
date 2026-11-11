@@ -1,11 +1,13 @@
-# Input files
+# Dados de entrada do piloto 1.0
 
-Save the files used by the first analyses here:
+Esta pasta contém arquivos versionados neste repositório público:
 
-- `teste_datacao_MCC.tree` — TreeAnnotator maximum-clade-credibility tree;
-- `ocorrencias.csv` — occurrence records;
-- `estames.csv` — stamen morphology measurements or coded traits.
+- `teste_datacao_MCC.tree` — árvore de máxima credibilidade de clados (MCC), resumo por TreeAnnotator com mean heights;
+- `ocorrencias.xlsx.csv` — dados de ocorrência restringidos aos nomes que correspondem às pontas da MCC; coluna `taxon_tree` contém o nome após remover somente espaço entre `m_` e o epíteto;
+- `estames.csv` — três caracteres categóricos de estames; os 153 táxons nomeados correspondem às 153 pontas.
 
-Update file paths and exact column names in `config/analysis.yml`. The validation script compares taxon labels literally and writes mismatch reports; it does not rename or edit data.
+A auditoria dos 24 nomes de ocorrência sem correspondência e dos 117 registros removidos está em `data/metadata/taxa_ocorrencias_excluidos_sem_correspondencia.csv`. Esses táxons e registros não integram a tabela de entrada filtrada. Nenhuma sinonímia ou correção taxonômica foi presumida.
 
-This repository is public. Data committed here will be publicly accessible. Check data-use terms and coordinate sensitivity before uploading occurrence records. Keep the ~700 MB resampled posterior sample and original 7.64 GB tree logs outside Git; record their generation settings in `data/external/README.md`.
+**Os arquivos neste repositório público são acessíveis a qualquer pessoa.** A tabela de ocorrência inclui coordenadas. Mantenha este material aqui somente se isso for compatível com os termos de uso e com eventuais restrições de localização.
+
+A amostra posterior (~700 MB) e os logs originais do BEAST não foram incluídos no Git.

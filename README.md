@@ -1,25 +1,35 @@
-# Microlicia: dated-tree analyses
+# Microlicia — piloto 1.0
 
-Reproducible workflow for analyses combining a dated phylogeny, species occurrence records, and stamen morphology.
+Repositório de análises reproduzíveis com a árvore datada MCC, caracteres de estames e dados de ocorrência filtrados para os táxons amostrados na árvore.
 
-## Where to save the inputs
+## Conteúdo de dados
 
-- `data/input/`: MCC tree, occurrence table, and stamen-trait table used by the first analyses.
-- `data/external/`: notes and pointers for large files kept outside Git, including the resampled posterior tree sample and original BEAST tree logs.
-- `results/`: generated summaries, figures, and model outputs.
+`data/input/` contém a MCC, a tabela de estames e a tabela de ocorrências após filtro taxonômico. A coluna `taxon_tree` guarda o nome comparável à ponta da árvore. A única harmonização automática aplicada aos nomes foi remover espaços entre `m_` e o epíteto; não foram atribuídos sinônimos nem corrigidas grafias.
 
-**This repository is public. Any data committed here will also be public.** Check data-use terms and coordinate sensitivity before committing occurrence records. The resampled tree sample (~700 MB) and original 7.64 GB logs should remain outside the repository.
+O arquivo de ocorrências contém 10.208 registros de 142 táxons da MCC. A MCC tem 153 pontas; nove espécies não têm registro de ocorrência no conjunto filtrado. Foram deixados de fora 117 registros de 24 nomes sem correspondência; a auditoria dos nomes e contagens está em `data/metadata/taxa_ocorrencias_excluidos_sem_correspondencia.csv`.
 
-## Start here
+**Este repositório é público.** Os arquivos em `data/input/` ficam publicamente acessíveis. A tabela contém coordenadas de ocorrências; confira termos de uso e eventuais restrições de localização antes de manter os dados aqui.
 
-1. Read [the workflow](docs/workflow.md).
-2. Place the MCC tree and the two CSV files in `data/input/`.
-3. Set actual file and column names in `config/analysis.yml`.
-4. Install R packages `ape` and `yaml`, then run from the repository root:
-   ```r
-   install.packages(c("ape", "yaml"))
-   source("scripts/00_validate_inputs.R")
-   ```
-5. Review the reports written to `results/00_input_checks/` and resolve taxon-name mismatches before statistical analyses.
+## Executar o piloto
 
-The checks do not rename taxa, infer missing values, or modify source data. Statistical models will be configured after inspecting the actual traits, replication structure, and occurrence fields.
+O script Python principal gera tabelas, gráficos, relatório e metadados em `results/`:
+
+```bash
+python -m pip install -r requirements.txt
+python scripts/pilot_1_0.py
+```
+
+Para refazer o processamento em outra pasta, defina `PILOT_INPUT_DIR` e `PILOT_OUTPUT_DIR`. A execução requer os arquivos em `data/input/` e o registro de calibração em `data/metadata/`.
+
+Também é possível executar o workflow no GitHub em **Actions → Microlicia pilot 1.0 → Run workflow**. O relatório e os arquivos de resultados serão disponibilizados como artefato da execução.
+
+## Resultados e interpretação
+
+- Relatório do piloto: [`docs/relatorio_piloto_1_0.md`](docs/relatorio_piloto_1_0.md).
+- Metadados e hashes da execução: [`data/metadata/pilot_1_0_metadata.json`](data/metadata/pilot_1_0_metadata.json).
+- Fonte dos valores de calibração e observação sobre escala: [`data/metadata/fonte_datação.json`](data/metadata/fonte_datação.json).
+- Próximas análises possíveis e limites: [`docs/proximas_analises.md`](docs/proximas_analises.md).
+
+[Inferência] A escala pretendida das idades é Ma: os três valores de calibração coincidem com as idades da Tabela 3 de Reginato et al. (2022), expressas em Ma. O XML local indica `years`; essa divergência deve ser resolvida com a configuração efetivamente usada no BEAST antes de tratar as idades como confirmadas.
+
+O arquivo de árvores posterior (~700 MB) e os logs grandes do BEAST não estão incluídos. O piloto atual usa somente a MCC e não propaga incerteza entre árvores.
