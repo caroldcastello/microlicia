@@ -1,49 +1,27 @@
-# Workflow: dated tree, stamen morphology, and occurrences
+# Workflow do piloto 1.0
 
-## Scope
+## 1. Filtro de espécies
 
-Start from the existing dated MCC tree; do not rerun BEAST for this initial workflow. The MCC tree supports single-tree analyses. Keep the resampled posterior tree file for later analyses that should propagate tree uncertainty.
+As ocorrências foram cruzadas com as 153 pontas da MCC. A regra de correspondência remove somente espaços entre `m_` e o epíteto. Foram mantidos 10.208 registros de 142 espécies. Os 117 registros de 24 nomes sem correspondência foram excluídos da tabela de análise, sem sinonimização ou correção de grafia. A tabela de auditoria de nomes preserva as contagens excluídas.
 
-## Stage 1 — organize and validate inputs
+A tabela de estames tem um registro para cada uma das 153 pontas e três caracteres categóricos completos. A coluna de táxon é o primeiro campo do CSV e veio sem nome de cabeçalho.
 
-| Input | Minimum content |
-|---|---|
-| `data/input/teste_datacao_MCC.tree` | TreeAnnotator MCC tree with branch lengths |
-| `data/input/ocorrencias.csv` | One row per occurrence, taxon name, longitude, latitude |
-| `data/input/estames.csv` | Taxon name and measured or coded stamen traits |
+## 2. Verificações da MCC e datas
 
-Set actual file and column names in `config/analysis.yml`. Taxon matching is literal: the script reports mismatches and does not silently standardize names.
+O script confirma ponta única, comprimentos de ramo e ultrametricidade. A altura da raiz foi calculada em unidades numéricas da árvore. A Tabela 3 do capítulo de Reginato et al. (2022) identifica em Ma as idades 29,47 Ma (coroa de Marcetieae), 30,03 Ma (Rhexieae) e 22,39 Ma (Lavoisiereae), coincidentes com os valores dos priors no XML disponível.
 
-Before statistical analysis, document taxonomic spelling/synonym decisions and sources; units and definitions for each quantitative trait; definitions of categorical states; whether rows represent species summaries, specimens, or repeated measurements; and sample size per species where available. Do not automatically average repeated measurements: choose and document a species-level summary or a hierarchical approach after reviewing the sampling design.
+[Inferência] Isso aponta que a escala pretendida é Ma e que a raiz da MCC representa aproximadamente 28,048 Ma. O XML traz `units="years"`; o valor da tabela e o rótulo do XML divergem. O relatório conserva essa ressalva e não altera o XML nem reexecuta o BEAST.
 
-## Stage 2 — tree checks
+## 3. Estames
 
-Check that the MCC tree can be read, has unique tip labels and branch lengths, and is ultrametric within numerical tolerance. Inspect root age and units against the BEAST configuration before reporting dates in years or millions of years. A successful file read does not validate the calibration or dating model.
+O script calcula frequências e reconstrói estados ancestrais por máxima verossimilhança sob CTMC de taxas iguais (ER), com priori uniforme na raiz, usando apenas a MCC. As probabilidades por nó são estimativas dependentes do modelo. Antes de resultados finais, comparar ER com modelos alternativos e resumir a incerteza entre árvores posteriores.
 
-For the posterior sample, retain a metadata note stating the original logging interval, burn-in removed, resampling interval, and resulting tree count. The filename alone does not establish these settings.
+## 4. Ocorrências
 
-## Stage 3 — stamen traits on the MCC tree
+Os resumos usam registros com latitude e longitude numéricas dentro dos limites globais. O filtro não valida que uma coordenada esteja no lugar certo. Os nove pares fora dos limites ou incompletos são listados para revisão. Resumos em graus são descritivos; não estimam área geográfica e não substituem revisão espacial.
 
-For quantitative traits: inspect ranges, missingness, and distributions; calculate a species-level value appropriate to the sampling design; assess phylogenetic signal (for example, Pagel's lambda); visualize trait distribution on the tree and in trait space; and reconstruct ancestral values only when coverage and assumptions are adequate.
+O script opcional `scripts/ruhere_duplicate_qc.R` usa `RuHere::flag_duplicates()` para sinalizar coordenadas repetidas dentro de espécie. Ele exporta os sinalizadores e mantém todas as linhas: a decisão de remover qualquer registro exige inspeção de vouchers e metadados.
 
-For categorical traits: define biologically meaningful states; report state frequencies and missing taxa; compare plausible transition models (for example, equal-rates and all-rates-different); and report ancestral-state uncertainty rather than a single state as certain.
+## 5. Reprodutibilidade
 
-The actual models and code will be fixed after inspecting the trait table and sampling structure. A reconstructed association alone does not demonstrate adaptation.
-
-## Stage 4 — occurrence data
-
-First summarize records per species, coordinate completeness, duplicate coordinates, and geographic coverage. Map records only after confirming the coordinate reference system and cleaning rules.
-
-Potential next analyses depend on the fields and question: species range size/geographic spread; comparison of stamen traits across pre-defined regions or environments; or historical biogeography using a justified area coding scheme and adequate taxon sampling. Select a model only after the geographic areas, outgroup/taxon sampling, and occurrence-cleaning choices are specified.
-
-## Stage 5 — combine traits, geography, and phylogeny
-
-After Stages 1–4, formulate specific hypotheses and select tests from the actual columns and sampling design. A phylogenetic comparative model may test association between a quantitative stamen trait and a defined geographic variable. Correlation does not by itself establish causal adaptation.
-
-## Stage 6 — propagate tree uncertainty
-
-Repeat selected estimates across the resampled posterior trees and summarize variation among trees. Label MCC results as single-tree analyses. Keep the approximately 700 MB posterior sample outside Git history and use an external storage or compute location when needed.
-
-## Outputs and reproducibility
-
-Keep raw inputs unchanged. Store summaries, figures, and model outputs under `results/`. Record software versions, configuration, exclusions, and taxonomic decisions. Do not publish coordinates with access restrictions or sensitive-location concerns.
+`python scripts/pilot_1_0.py` gera tabelas e figuras em `results/`; a execução no GitHub Actions salva a pasta como artefato. O manifesto guarda versões, parâmetros, hashes dos arquivos e exclusões. A árvore posterior e os logs extensos não são necessários para o piloto MCC e permanecem fora do Git.
