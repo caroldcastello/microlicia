@@ -13,7 +13,24 @@ occurrence_format:
   tree_taxon_column: "taxon_tree"
   longitude_column: "Longitude_decimal"
   latitude_column: "Latitude_decimal"
-  name_rule: "Remove whitespace only between m_ and the epithet; no synonymization or spelling correction"
+  name_rule: "Use taxon_tree when supplied; otherwise use Taxon_original and remove whitespace only between m_ and the epithet"
+  corrected_tree_tip_labels:
+    m_bellineloi: m_belinelloi
+    m_diamantinensis: m_diamantinesis
+
+analysis_scope:
+  focal_genus: Microlicia
+  occurrence_analyses: Microlicia tree tips only
+  stamen_analyses: Microlicia tree tips only
+  dated_tree_figure: all 153 tree tips
+  non_microlicia_tips_in_analysis: false
+
+figures:
+  dated_tree_all_taxa:
+    outputs: [dated_tree_all_taxa.png, dated_tree_all_taxa.pdf]
+    labels: full genus and species names
+    highlight: Microlicia
+    time_axis_label: age in numeric MCC units pending scale reconciliation
 
 stamen_traits:
   delimiter: ";"
