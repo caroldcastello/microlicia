@@ -8,7 +8,7 @@ files:
 
 occurrence_format:
   delimiter: ";"
-  encoding: "cp1252"
+  encoding: "UTF-8 with BOM"
   original_taxon_column: "Taxon_original"
   tree_taxon_column: "taxon_tree"
   longitude_column: "Longitude_decimal"
