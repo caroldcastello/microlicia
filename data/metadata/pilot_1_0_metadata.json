@@ -1,6 +1,6 @@
 {
   "pilot_version": "1.0",
-  "run_time_utc": "2026-11-11T14:11:15.924255+00:00",
+  "run_time_utc": "2026-11-11T14:16:00.442811+00:00",
   "software": {
     "python": "3.12.14",
     "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
@@ -15,8 +15,8 @@
       "bytes": 169887
     },
     "ocorrencias.xlsx.csv": {
-      "sha256": "b6a767eb3f233d035d27ceff89a1c0eaef1a12dfdbb9fc13cb22aff390e2d516",
-      "bytes": 719368
+      "sha256": "a47dfb889be86458666742226747d90a22303631b7b0e49ee9a16bcf0c023e81",
+      "bytes": 719639
     },
     "estames.csv": {
       "sha256": "726aa66244f65f348331daa3a7ffc24d130d2a027bf0599bb6a8fc5ee764c224",
