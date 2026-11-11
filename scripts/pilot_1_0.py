@@ -106,7 +106,7 @@ def descendants(n):
 
 def read_occurrences(path):
     # Exported CSV is semicolon-delimited and Windows-1252 encoded.
-    d=pd.read_csv(path,sep=';',encoding='cp1252',dtype={'Taxon_original':'string'},keep_default_na=False)
+    d=pd.read_csv(path,sep=';',encoding='utf-8-sig',dtype={'Taxon_original':'string'},keep_default_na=False)
     needed={'Taxon_original','Latitude_decimal','Longitude_decimal'}
     if not needed.issubset(d.columns):raise ValueError(f'Occurrence columns missing: {needed-set(d.columns)}')
     d['taxon_raw']=d['Taxon_original'].astype(str).str.strip()
